@@ -1,0 +1,11 @@
+# macOS
+.DS_Store
+
+# Editor
+*.swp
+*.swo
+*~
+
+# Local configuration
+*.local
+*.local.md
