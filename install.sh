@@ -35,6 +35,23 @@ copy_if_missing() {
     fi
 }
 
+# Deploy ccstatusline config
+CCSTATUSLINE_DIR="$HOME/.config/ccstatusline"
+if [ -d "$CONFIG_SOURCE/ccstatusline" ]; then
+    mkdir -p "$CCSTATUSLINE_DIR"
+    copy_if_missing "$CONFIG_SOURCE/ccstatusline/settings.json" "$CCSTATUSLINE_DIR/settings.json"
+fi
+
+# Deploy statusline scripts
+if [ -f "$SCRIPT_DIR/statusline.sh" ]; then
+    copy_if_missing "$SCRIPT_DIR/statusline.sh" "$CLAUDE_DIR/statusline.sh"
+    chmod +x "$CLAUDE_DIR/statusline.sh"
+fi
+if [ -f "$SCRIPT_DIR/statusline-simple.sh" ]; then
+    copy_if_missing "$SCRIPT_DIR/statusline-simple.sh" "$CLAUDE_DIR/statusline-simple.sh"
+    chmod +x "$CLAUDE_DIR/statusline-simple.sh"
+fi
+
 # Deploy configuration files
 copy_if_missing "$CONFIG_SOURCE/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
 copy_if_missing "$CONFIG_SOURCE/PERMISSIONS-GUIDE.md" "$CLAUDE_DIR/PERMISSIONS-GUIDE.md"

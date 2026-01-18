@@ -1,6 +1,7 @@
 {
   "preferredNotifyMethod": "terminal_bell",
-  "feedbackSurveyState": {
-    "lastShownTime": 1753942745114
+  "statusLine": {
+    "type": "command",
+    "command": "$HOME/.claude/statusline.sh"
   }
 }
