@@ -10,6 +10,7 @@ This repository contains my Claude Code configuration, including:
 - **agents/** - Custom agent definitions (code-reviewer, debug-specialist, docs-updater)
 - **hooks/** - Enforcement scripts for security and quality
 - **skills/** - Reusable automation commands
+- **docs/** - Setup guides (MCP servers, etc.)
 
 ## Installation
 
@@ -89,6 +90,15 @@ Reusable automation via slash commands:
 |-------|-------|---------|
 | `commit-messages` | `/commit-messages` | Generate conventional commits |
 | `security-audit` | `/security-audit` | Run vulnerability scans |
+
+### MCP Servers
+
+External tool integrations configured globally. See [docs/mcp-setup.md](docs/mcp-setup.md).
+
+| Server | Purpose |
+|--------|---------|
+| `github` | Issue/PR management, repo access |
+| `context7` | Current documentation lookup |
 
 ## Deployment
 
