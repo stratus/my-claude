@@ -11,6 +11,7 @@ This repository contains my Claude Code configuration, including:
 - **hooks/** - Enforcement scripts for security and quality
 - **skills/** - Reusable automation commands
 - **docs/** - Setup guides (MCP servers, etc.)
+- **templates/** - Project-specific CLAUDE.md templates (Next.js, React Native, Go)
 
 ## Installation
 
@@ -44,6 +45,10 @@ my-claude/
 ├── hooks/                  # Enforcement hooks
 ├── skills/                 # Slash commands
 ├── docs/                   # Reference documentation
+├── templates/              # Project-specific templates
+│   ├── nextjs/             # Next.js web apps
+│   ├── react-native/       # Mobile apps
+│   └── go-cli/             # Go CLI/services
 ├── install.sh              # Installation script
 ├── Makefile                # Build orchestration
 └── README.md
@@ -99,6 +104,20 @@ External tool integrations configured globally. See [docs/mcp-setup.md](docs/mcp
 |--------|---------|
 | `github` | Issue/PR management, repo access |
 | `context7` | Current documentation lookup |
+
+### Project Templates
+
+Copy to new projects for domain-specific rules. See [templates/README.md](templates/README.md).
+
+```bash
+cp -r ~/my-claude/templates/nextjs/.claude ~/your-project/
+```
+
+| Template | Stack |
+|----------|-------|
+| `nextjs/` | Next.js 15+, App Router, Tailwind, shadcn/ui |
+| `react-native/` | Expo, React Native, expo-router |
+| `go-cli/` | Go CLI tools and services |
 
 ## Deployment
 
