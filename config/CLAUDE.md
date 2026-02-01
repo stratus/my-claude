@@ -12,12 +12,18 @@ For changes **>20 lines or touching security/validation**:
 1. Run `code-reviewer` agent → BEFORE commit
 2. Run `docs-updater` agent → For user-facing changes
 3. Verify 80%+ test coverage, linter passes, all tests pass
+4. 🆕 **Verify Definition of Done** (see section below)
 
 For **small changes (<20 lines, non-security)**: Run tests and linter only.
 
 ### New Project Setup
 
 If project lacks `.claude/CLAUDE.md`: **ASK** user to create one before coding.
+
+🆕 **Before implementing any feature**, confirm:
+- User story exists: "As a [user type], I can [action] so that [outcome]"
+- Acceptance criteria are defined (how to manually verify it works)
+- For projects with >2 components: architecture diagram exists or will be created
 
 ### Token Optimization
 
@@ -29,13 +35,72 @@ If project lacks `.claude/CLAUDE.md`: **ASK** user to create one before coding.
 
 ---
 
+🆕 ## Definition of Done
+
+**Nothing is "done" until these are verified.** Check applicable items before marking complete.
+
+### All Projects
+- [ ] README enables clone-to-running in <5 minutes (test mentally or actually)
+- [ ] A new engineer unfamiliar with the project can understand what it does and how to use it
+- [ ] All documented commands/steps actually work (no stale instructions)
+- [ ] Error messages are actionable (user knows what went wrong and how to fix)
+
+### Web Applications
+- [ ] Core user flows work end-to-end (not just API endpoints)
+- [ ] Basic UI states handled: loading, empty, error, success
+- [ ] Can demonstrate the happy path manually in browser
+- [ ] Forms have validation with user-visible feedback
+- [ ] Navigation between features works
+
+### CLI Tools / Libraries
+- [ ] `--help` output is accurate and useful
+- [ ] At least one realistic usage example in README
+- [ ] Exit codes are meaningful (0 = success, non-zero = failure)
+- [ ] Errors print to stderr, output to stdout
+
+### Infrastructure / Automation
+- [ ] Runbook or operational doc exists for non-obvious operations
+- [ ] Failure modes documented (what breaks, how to recover)
+- [ ] Dependencies and prerequisites explicitly listed
+
+---
+
+🆕 ## Architecture Documentation
+
+**Required** for any project with >2 components, services, or external integrations.
+
+### What to Document
+Create `docs/architecture.md` (or section in README for simple projects) containing:
+```mermaid
+graph TD
+    A[Component] --> B[Component]
+    B --> C[External Service]
+```
+
+Must show:
+- Component/service boundaries
+- Data flow direction (arrows)
+- External dependencies (APIs, databases, queues)
+- Key interfaces between components
+
+### When to Update
+- Adding new component or service
+- Changing integration patterns
+- Adding external dependencies
+- Modifying data flow
+
+**Before implementing multi-component features**: Create/update diagram first, then code.
+
+---
+
 ## Core Principles
 
 1. **Security First** - Non-negotiable
 2. **Test Everything** - 80% minimum coverage
 3. **Document Changes** - Keep docs current
-4. **Readable Code** - Self-documenting preferred
-5. **Track with Git** - Atomic commits, clear messages
+4. 🆕 **User-Verifiable** - If you can't demo it, it's not done
+5. **Readable Code** - Self-documenting preferred
+6. **Track with Git** - Atomic commits, clear messages
 
 ---
 
@@ -61,13 +126,28 @@ SQL injection, XSS, CSRF, insecure deserialization, XXE, SSRF, command injection
 - Unit tests: individual functions, mock dependencies, fast
 - Integration tests: component interactions, API contracts
 - Edge cases: null, empty, boundaries, errors, concurrency
+- 🆕 **Smoke tests**: For web apps, at least one test that verifies the app starts and serves the main page
 - TDD preferred, tests alongside implementation
 
 ---
 
 ## Documentation
 
-**Required**: README.md (purpose, install, usage, dev setup, testing, deploy)
+**Required**: README.md with:
+- Purpose (one paragraph: what it does, who it's for)
+- Prerequisites (runtime versions, system deps)
+- Installation (copy-paste commands that work)
+- Usage (realistic examples, not just API signatures)
+- Development setup (how to run locally)
+- Testing (how to run tests)
+- 🆕 Deployment (if applicable, or link to deployment docs)
+
+🆕 **README Litmus Test**: Would a new team member be able to:
+1. Understand what this does in 30 seconds?
+2. Get it running locally in 5 minutes?
+3. Know where to look for more detail?
+
+If no to any → README is incomplete.
 
 Update docs when changing code. Use `docs-updater` agent for user-facing changes.
 
@@ -126,6 +206,19 @@ Secrets, build artifacts, dependencies (node_modules), IDE files, OS files, larg
 | `debug-specialist` | Errors, test failures, unexpected behavior | sonnet |
 
 **Skip agents** for trivial changes (<20 lines, non-security, no user-facing impact).
+
+---
+
+🆕 ## Pre-Completion Review
+
+Before declaring any feature/task complete, answer:
+
+1. **User perspective**: How would someone who's never seen this verify it works?
+2. **Docs check**: Are all new/changed features reflected in documentation?
+3. **Diagram check**: Does architecture doc still accurately reflect the system?
+4. **Demo ready**: Can you walk through the primary use case right now?
+
+If uncertain on any point, **ask the user** rather than assuming complete.
 
 ---
 

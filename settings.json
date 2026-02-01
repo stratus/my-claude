@@ -6,5 +6,9 @@
   "statusLine": {
     "type": "command",
     "command": "/Users/gfranco/.claude/statusline.sh"
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllow": true
   }
 }
