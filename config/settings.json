@@ -2,6 +2,6 @@
   "preferredNotifyMethod": "terminal_bell",
   "statusLine": {
     "type": "command",
-    "command": "$HOME/.claude/statusline.sh"
+    "command": "bash ~/.claude/statusline/statusline.sh"
   }
 }

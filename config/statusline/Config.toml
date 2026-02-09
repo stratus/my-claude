@@ -1,0 +1,62 @@
+# rz1989s/claude-code-statusline configuration
+# See: https://github.com/rz1989s/claude-code-statusline
+
+theme.name = "catppuccin"
+
+# 2-line layout (no cost tracking — Max subscription)
+display.lines = 2
+display.line1.components = ["repo_info", "commits", "model_info", "time_display"]
+display.line1.separator = " | "
+display.line1.show_when_empty = true
+
+display.line2.components = ["mcp_status", "version_info"]
+display.line2.separator = " | "
+display.line2.show_when_empty = true
+
+# Feature toggles
+features.show_commits = true
+features.show_version = true
+features.show_mcp_status = true
+features.show_cost_tracking = false
+features.show_reset_info = false
+features.show_prayer_times = false
+features.show_burn_rate = false
+features.show_cache_efficiency = false
+features.show_cost_projections = false
+
+# Labels
+labels.commits = "Commits:"
+
+# Timeouts
+timeouts.git = "5s"
+timeouts.mcp = "10s"
+timeouts.version = "2s"
+timeouts.cache = "10s"
+
+# Component settings
+components.repo_info.enabled = true
+components.repo_info.show_path = true
+components.repo_info.abbreviate_home = true
+
+components.commits.enabled = true
+components.commits.scope = "today"
+
+components.model_info.enabled = true
+components.model_info.show_model_name = true
+
+components.mcp_status.enabled = true
+components.mcp_status.show_count = true
+components.mcp_status.show_server_names = true
+
+# Disable all cost components
+components.cost_repo.enabled = false
+components.cost_monthly.enabled = false
+components.cost_weekly.enabled = false
+components.cost_daily.enabled = false
+components.cost_live.enabled = false
+
+# Cache
+cache.base_directory = "auto"
+cache.enable_universal_caching = true
+cache.enable_statistics = false
+cache.enable_corruption_detection = true

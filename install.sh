@@ -35,21 +35,19 @@ copy_if_missing() {
     fi
 }
 
-# Deploy ccstatusline config
-CCSTATUSLINE_DIR="$HOME/.config/ccstatusline"
-if [ -d "$CONFIG_SOURCE/ccstatusline" ]; then
-    mkdir -p "$CCSTATUSLINE_DIR"
-    copy_if_missing "$CONFIG_SOURCE/ccstatusline/settings.json" "$CCSTATUSLINE_DIR/settings.json"
+# Install rz1989s/claude-code-statusline if not already present
+STATUSLINE_DIR="$CLAUDE_DIR/statusline"
+if [ ! -f "$STATUSLINE_DIR/statusline.sh" ]; then
+    echo "  📊 Installing claude-code-statusline..."
+    curl -sSfL https://raw.githubusercontent.com/rz1989s/claude-code-statusline/main/install.sh | bash -s -- --preserve-statusline
+else
+    echo "  ⏭️  claude-code-statusline already installed"
 fi
 
-# Deploy statusline scripts
-if [ -f "$SCRIPT_DIR/statusline.sh" ]; then
-    copy_if_missing "$SCRIPT_DIR/statusline.sh" "$CLAUDE_DIR/statusline.sh"
-    chmod +x "$CLAUDE_DIR/statusline.sh"
-fi
-if [ -f "$SCRIPT_DIR/statusline-simple.sh" ]; then
-    copy_if_missing "$SCRIPT_DIR/statusline-simple.sh" "$CLAUDE_DIR/statusline-simple.sh"
-    chmod +x "$CLAUDE_DIR/statusline-simple.sh"
+# Deploy our Config.toml (only if it doesn't exist)
+if [ -d "$CONFIG_SOURCE/statusline" ]; then
+    mkdir -p "$STATUSLINE_DIR"
+    copy_if_missing "$CONFIG_SOURCE/statusline/Config.toml" "$STATUSLINE_DIR/Config.toml"
 fi
 
 # Deploy configuration files
