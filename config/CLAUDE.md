@@ -209,6 +209,38 @@ Secrets, build artifacts, dependencies (node_modules), IDE files, OS files, larg
 
 ---
 
+## Memory & Learning
+
+Claude Code has persistent auto memory at `~/.claude/projects/*/memory/`. Use it to avoid re-discovering the same things each session.
+
+### When to Write Memories
+
+- **Proactively** after solving a hard bug, discovering a project quirk, or learning an environment gotcha
+- **On request** when the user says "remember this" (use `/remember` skill)
+- **After repeated patterns** — if you've seen the same issue twice, write it down
+
+### File Organization
+
+| File | Purpose | Limit |
+|------|---------|-------|
+| `MEMORY.md` | Quick-reference index, loaded into system prompt | 200 lines |
+| `<topic>.md` | Detailed notes (e.g., `debugging.md`, `patterns.md`) | No limit |
+
+MEMORY.md is your index — keep entries brief with links to topic files for detail.
+
+### What NOT to Remember
+
+- Secrets, credentials, API keys (never write these anywhere)
+- Session-specific context (current task, temporary state)
+- Information already in CLAUDE.md or project docs (avoid duplication)
+- Speculative conclusions from a single observation
+
+### Using /remember
+
+Use the `/remember` skill when the user explicitly asks to save something. It handles file selection, deduplication, and line-limit checks.
+
+---
+
 🆕 ## Pre-Completion Review
 
 Before declaring any feature/task complete, answer:

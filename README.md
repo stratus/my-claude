@@ -34,7 +34,7 @@ make install
 
 ```
 my-claude/
-├── config/
+├── config/                 # Deploys to ~/.claude/ (global, all projects)
 │   ├── CLAUDE.md           # Development standards
 │   ├── PERMISSIONS-GUIDE.md # Security & permissions
 │   ├── settings.json       # Claude Code settings
@@ -42,6 +42,8 @@ my-claude/
 │       ├── code-reviewer.md
 │       ├── debug-specialist.md
 │       └── docs-updater.md
+├── .claude/                # Project-local overrides (this repo only)
+│   └── CLAUDE.md           # Guidelines for editing my-claude itself
 ├── hooks/                  # Enforcement hooks
 ├── skills/                 # Slash commands
 ├── docs/                   # Reference documentation
@@ -53,6 +55,8 @@ my-claude/
 ├── Makefile                # Build orchestration
 └── README.md
 ```
+
+**`config/` vs `.claude/`**: `config/` contains source files that `make install` deploys globally to `~/.claude/`. `.claude/` contains project-specific instructions that Claude reads only when working in this repo (e.g., deployment conventions, security reminders for this public repo).
 
 ## Configuration Files
 
@@ -94,6 +98,7 @@ Reusable automation via slash commands:
 | Skill | Usage | Purpose |
 |-------|-------|---------|
 | `commit-messages` | `/commit-messages` | Generate conventional commits |
+| `remember` | `/remember` | Save learnings to persistent memory |
 | `security-audit` | `/security-audit` | Run vulnerability scans |
 
 ### MCP Servers
