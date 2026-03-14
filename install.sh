@@ -19,7 +19,7 @@ echo "🤖 Installing my-claude configuration..."
 echo ""
 
 # Create .claude directory structure
-mkdir -p "$CLAUDE_DIR"/{agents,config,plans,hooks,commands}
+mkdir -p "$CLAUDE_DIR"/{agents,config,plans,hooks,commands,rules}
 
 # Copy main config files (only if they don't exist)
 copy_if_missing() {
@@ -55,6 +55,18 @@ copy_if_missing "$CONFIG_SOURCE/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
 copy_if_missing "$CONFIG_SOURCE/PERMISSIONS-GUIDE.md" "$CLAUDE_DIR/PERMISSIONS-GUIDE.md"
 copy_if_missing "$CONFIG_SOURCE/README.md" "$CLAUDE_DIR/README.md"
 copy_if_missing "$CONFIG_SOURCE/settings.json" "$CLAUDE_DIR/settings.json"
+
+# Deploy rules (auto-loaded by Claude Code)
+if [ -d "$CONFIG_SOURCE/rules" ] && [ "$(ls -A "$CONFIG_SOURCE/rules" 2>/dev/null)" ]; then
+    echo ""
+    echo "  📏 Setting up rules..."
+    for rule in "$CONFIG_SOURCE/rules/"*.md; do
+        if [ -f "$rule" ]; then
+            rule_name="$(basename "$rule")"
+            copy_if_missing "$rule" "$CLAUDE_DIR/rules/$rule_name"
+        fi
+    done
+fi
 
 # Deploy agents
 echo ""
@@ -107,12 +119,21 @@ echo "✅ my-claude installation complete!"
 echo ""
 echo "Configuration: ~/.claude/"
 echo "Development standards: ~/.claude/CLAUDE.md"
+echo "Rules (auto-loaded): ~/.claude/rules/"
 echo ""
 echo "Available agents:"
 for agent in "$CLAUDE_DIR/agents/"*.md; do
     if [ -f "$agent" ]; then
         agent_name="$(basename "$agent" .md)"
         echo "  - $agent_name"
+    fi
+done
+echo ""
+echo "Available skills (/slash commands):"
+for skill_dir in "$CLAUDE_DIR/commands/"*/; do
+    if [ -d "$skill_dir" ]; then
+        skill_name="$(basename "$skill_dir")"
+        echo "  - /$skill_name"
     fi
 done
 echo ""

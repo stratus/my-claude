@@ -1,6 +1,8 @@
 ---
 name: commit-messages
 description: Generate clear commit messages following project conventions. Use when writing commit messages, reviewing staged changes, or preparing releases.
+model: haiku
+allowed-tools: Bash(git *)
 ---
 
 # Commit Message Skill
@@ -32,7 +34,7 @@ Detailed explanation if needed (wrap at 72 chars):
 - Any breaking changes
 - Related issues/tickets
 
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ## Subject Line Rules
@@ -66,7 +68,7 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 
 - `Fixes #123` to close issues
 - `Related to #456` to reference without closing
-- **Always include**: `Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>`
+- **Always include**: `Co-Authored-By: Claude <noreply@anthropic.com>`
 
 ## Git Command Format
 
@@ -78,7 +80,7 @@ Brief summary here
 
 Detailed explanation if needed.
 
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -92,7 +94,7 @@ Add dark mode toggle to settings
 Implements user preference for dark/light theme with
 localStorage persistence.
 
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ### Bug fix with issue reference
@@ -104,7 +106,7 @@ existing items before insertion.
 
 Fixes #234
 
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ### Refactoring
@@ -115,7 +117,7 @@ Refactor authentication to use middleware pattern
 - Move session management from controller
 - Add refresh token rotation
 
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ## Output

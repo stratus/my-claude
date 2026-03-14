@@ -25,12 +25,14 @@ make clean      # Remove ~/.claude/ (creates backup first)
 
 | Path | Deploys to | Purpose |
 |------|-----------|---------|
-| `config/CLAUDE.md` | `~/.claude/CLAUDE.md` | Global dev standards |
-| `config/settings.json` | `~/.claude/settings.json` | Claude Code settings |
+| `config/CLAUDE.md` | `~/.claude/CLAUDE.md` | Global dev standards (slim, ~90 lines) |
+| `config/rules/*.md` | `~/.claude/rules/` | Auto-loaded rule files (split from CLAUDE.md) |
+| `config/settings.json` | `~/.claude/settings.json` | Claude Code settings (hooks, permissions, sandbox) |
 | `config/agents/*.md` | `~/.claude/agents/` | Agent definitions |
 | `skills/*/SKILL.md` | `~/.claude/commands/*/SKILL.md` | Slash command skills |
 | `hooks/*` | `~/.claude/hooks/` | Event hooks (made executable) |
 | `config/statusline/` | `~/.claude/statusline/` | Statusline config |
+| `templates/mcp.json.example` | (manual copy) | Recommended MCP servers for new projects |
 
 ## Conventions
 

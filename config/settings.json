@@ -1,7 +1,113 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "preferredNotifyMethod": "terminal_bell",
+  "alwaysThinkingEnabled": true,
+  "outputStyle": "Explanatory",
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline/statusline.sh"
-  }
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/block-dangerous-commands.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/block-secrets.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/after-edit.sh"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/notify.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  },
+  "permissions": {
+    "allow": [
+      "Edit(*)",
+      "Write(*)",
+      "Bash(npm run *)",
+      "Bash(npm test *)",
+      "Bash(go test *)",
+      "Bash(go build *)",
+      "Bash(pytest *)",
+      "Bash(cargo test *)",
+      "Bash(cargo build *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git branch *)",
+      "Bash(make *)",
+      "mcp__context7__*",
+      "mcp__github__*"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(./secrets/**)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "attribution": {
+    "commit": "Co-Authored-By: Claude <noreply@anthropic.com>",
+    "pr": "Generated with [Claude Code](https://claude.com/claude-code)"
+  },
+  "spinnerTipsOverride": {
+    "tips": [
+      "Use /compact at ~50% context — don't wait for auto-compact",
+      "Use /clear between unrelated tasks to reset context",
+      "Start with /plan for complex features before coding",
+      "Use Esc Esc or /rewind when Claude goes off-track",
+      "Say 'ultrathink' in prompts for high-effort reasoning",
+      "Use /context to check context window usage"
+    ],
+    "excludeDefault": false
+  },
+  "env": {
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50"
+  },
+  "companyAnnouncements": [
+    "Use /plan before complex features — design a phased approach before writing code",
+    "Use /implement after a plan is approved — phased execution with quality gates",
+    "Use /pr when ready to submit — structured PR with summary, changes, and test plan",
+    "Use /compact at ~50% context (auto-compact is set to 50%) — don't wait until you're out of space",
+    "Use /clear between unrelated tasks — fresh context prevents drift and hallucination",
+    "Use Esc Esc or /rewind when Claude goes off-track — rewind beats fixing in-place",
+    "Copy templates/mcp.json.example to .mcp.json in new projects for Context7 + Playwright"
+  ]
 }
