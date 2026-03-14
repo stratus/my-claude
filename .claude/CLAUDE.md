@@ -15,11 +15,12 @@ Configuration repo that deploys Claude Code settings to `~/.claude/`. Contains g
 ## Deployment
 
 ```bash
-make install    # Deploy to ~/.claude/ (copy-if-missing)
-make clean      # Remove ~/.claude/ (creates backup first)
+make install              # Deploy to ~/.claude/ (interactive on conflicts)
+FORCE_UPDATE=1 make install  # Overwrite all diverged files without prompting
+make clean                # Remove ~/.claude/ (creates backup first)
 ```
 
-**copy-if-missing pattern**: `install.sh` only copies files that don't already exist at the destination. This preserves user customizations. To force-update a file, delete the target first then re-run `make install`.
+**Smart deploy**: `install.sh` copies new files and compares existing ones by SHA-256 checksum. On content mismatch, it shows a diff and prompts to overwrite or keep the local version. Use `FORCE_UPDATE=1` to skip prompts.
 
 ## File Structure
 
