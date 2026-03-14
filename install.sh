@@ -44,10 +44,14 @@ else
     echo "  ⏭️  claude-code-statusline already installed"
 fi
 
-# Deploy our Config.toml (only if it doesn't exist)
+# Deploy statusline config and wrapper
 if [ -d "$CONFIG_SOURCE/statusline" ]; then
     mkdir -p "$STATUSLINE_DIR"
     copy_if_missing "$CONFIG_SOURCE/statusline/Config.toml" "$STATUSLINE_DIR/Config.toml"
+    # Always update wrapper (it's the routing logic, not user-customizable)
+    echo "  📄 Deploying statusline-wrapper.sh"
+    cp "$CONFIG_SOURCE/statusline/statusline-wrapper.sh" "$STATUSLINE_DIR/statusline-wrapper.sh"
+    chmod +x "$STATUSLINE_DIR/statusline-wrapper.sh"
 fi
 
 # Deploy configuration files

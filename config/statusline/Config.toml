@@ -5,11 +5,11 @@ theme.name = "catppuccin"
 
 # 2-line layout (no cost tracking — Max subscription)
 display.lines = 2
-display.line1.components = ["repo_info", "commits", "model_info", "time_display"]
+display.line1.components = ["repo_info", "model_info", "context_window", "time_display"]
 display.line1.separator = " | "
 display.line1.show_when_empty = true
 
-display.line2.components = ["mcp_status", "version_info"]
+display.line2.components = ["commits", "mcp_status", "version_info"]
 display.line2.separator = " | "
 display.line2.show_when_empty = true
 
