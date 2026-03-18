@@ -19,4 +19,5 @@ if [[ "$PWD" == "$HOME/claude-corp"* ]]; then
     export ENV_CONFIG_LINE2_COMPONENTS="cost_daily,burn_rate,usage_limits,commits"
 fi
 
-exec bash ~/.claude/statusline/statusline.sh
+WRAPPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec bash "$WRAPPER_DIR/statusline.sh"

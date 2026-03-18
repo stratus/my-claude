@@ -18,9 +18,12 @@ Configuration repo that deploys Claude Code settings to `~/.claude/`. Contains g
 make install              # Deploy to ~/.claude/ (interactive on conflicts)
 FORCE_UPDATE=1 make install  # Overwrite all diverged files without prompting
 make clean                # Remove ~/.claude/ (creates backup first)
+
+# Multi-target: deploy to additional Claude instances
+make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 ```
 
-**Smart deploy**: `install.sh` copies new files and compares existing ones by SHA-256 checksum. On content mismatch, it shows a diff and prompts to overwrite or keep the local version. Use `FORCE_UPDATE=1` to skip prompts.
+**Smart deploy**: `install.sh` copies new files and compares existing ones by SHA-256 checksum. On content mismatch, it shows a diff and prompts to overwrite or keep the local version. Use `FORCE_UPDATE=1` to skip prompts. Use `CLAUDE_TARGETS` to deploy to multiple directories in one go.
 
 ## File Structure
 

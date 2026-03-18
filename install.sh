@@ -3,7 +3,8 @@
 # Install my-claude configuration to ~/.claude/
 #
 # Usage: ./install.sh
-#        FORCE_UPDATE=1 ./install.sh   (skip prompts, overwrite all)
+#        CLAUDE_DIR=~/.claude-corp ./install.sh   (install to alternate dir)
+#        FORCE_UPDATE=1 ./install.sh               (skip prompts, overwrite all)
 #
 # This script deploys Claude Code configuration files to the user's
 # home directory. New files are copied in; existing files are compared
@@ -14,7 +15,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLAUDE_DIR="$HOME/.claude"
+CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
 CONFIG_SOURCE="$SCRIPT_DIR/config"
 
 echo "🤖 Installing my-claude configuration..."
@@ -79,11 +80,29 @@ copy_if_missing() {
     esac
 }
 
-# Install rz1989s/claude-code-statusline if not already present
+# Install rz1989s/claude-code-statusline
 STATUSLINE_DIR="$CLAUDE_DIR/statusline"
+PRIMARY_STATUSLINE="$HOME/.claude/statusline/statusline.sh"
+
 if [ ! -f "$STATUSLINE_DIR/statusline.sh" ]; then
-    echo "  📊 Installing claude-code-statusline..."
-    curl -sSfL https://raw.githubusercontent.com/rz1989s/claude-code-statusline/main/install.sh | bash -s -- --preserve-statusline
+    if [ "$CLAUDE_DIR" = "$HOME/.claude" ]; then
+        # Primary target: install from upstream
+        echo "  📊 Installing claude-code-statusline..."
+        curl -sSfL https://raw.githubusercontent.com/rz1989s/claude-code-statusline/main/install.sh | bash -s -- --preserve-statusline
+    elif [ -f "$PRIMARY_STATUSLINE" ]; then
+        # Non-default target: symlink from primary install
+        echo "  📊 Linking statusline from primary install..."
+        mkdir -p "$STATUSLINE_DIR"
+        ln -sf "$PRIMARY_STATUSLINE" "$STATUSLINE_DIR/statusline.sh"
+        # Also link supporting files (lib/, examples/, version.txt)
+        for item in lib examples version.txt; do
+            if [ -e "$HOME/.claude/statusline/$item" ]; then
+                ln -sf "$HOME/.claude/statusline/$item" "$STATUSLINE_DIR/$item"
+            fi
+        done
+    else
+        echo "  ⚠️  Statusline not available — install to ~/.claude first, then re-run"
+    fi
 else
     echo "  ⏭️  claude-code-statusline already installed"
 fi
@@ -103,6 +122,14 @@ copy_if_missing "$CONFIG_SOURCE/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
 copy_if_missing "$CONFIG_SOURCE/PERMISSIONS-GUIDE.md" "$CLAUDE_DIR/PERMISSIONS-GUIDE.md"
 copy_if_missing "$CONFIG_SOURCE/README.md" "$CLAUDE_DIR/README.md"
 copy_if_missing "$CONFIG_SOURCE/settings.json" "$CLAUDE_DIR/settings.json"
+
+# Rewrite ~/.claude/ paths in settings.json for non-default targets
+if [ "$CLAUDE_DIR" != "$HOME/.claude" ] && [ -f "$CLAUDE_DIR/settings.json" ]; then
+    # Convert absolute CLAUDE_DIR back to tilde form for settings.json
+    claude_dir_tilde="${CLAUDE_DIR/#$HOME/\~}"
+    echo "  🔄 Rewriting paths in settings.json → $claude_dir_tilde/"
+    sed -i '' "s|~/.claude/|${claude_dir_tilde}/|g" "$CLAUDE_DIR/settings.json"
+fi
 
 # Deploy rules (auto-loaded by Claude Code)
 if [ -d "$CONFIG_SOURCE/rules" ] && [ "$(ls -A "$CONFIG_SOURCE/rules" 2>/dev/null)" ]; then
@@ -165,9 +192,9 @@ fi
 echo ""
 echo "✅ my-claude installation complete!"
 echo ""
-echo "Configuration: ~/.claude/"
-echo "Development standards: ~/.claude/CLAUDE.md"
-echo "Rules (auto-loaded): ~/.claude/rules/"
+echo "Configuration: $CLAUDE_DIR/"
+echo "Development standards: $CLAUDE_DIR/CLAUDE.md"
+echo "Rules (auto-loaded): $CLAUDE_DIR/rules/"
 echo ""
 echo "Available agents:"
 for agent in "$CLAUDE_DIR/agents/"*.md; do
