@@ -8,12 +8,15 @@ Detailed rules auto-load from `~/.claude/rules/`.
 ## Workflow After Code Changes
 
 For changes **>20 lines or touching security/validation**:
-1. Run `code-reviewer` agent (sonnet) → BEFORE commit
-2. Run `docs-updater` agent (haiku) → For user-facing changes
-3. Verify 80%+ test coverage, linter passes, all tests pass
-4. Verify Definition of Done (see `rules/definition-of-done.md`)
+1. Run `code-reviewer` agent (sonnet) — it will mark review done automatically
+2. If security-sensitive files changed: run `security-analyst` agent — marks security review done
+3. Run `docs-updater` agent (haiku) → For user-facing changes
+4. Verify 80%+ test coverage, linter passes, all tests pass
+5. Commit — the **pre-commit gate hook enforces steps 1-2**
 
 For **small changes (<20 lines, non-security)**: Run tests and linter only.
+
+**Pre-commit gate**: A hook blocks `git commit` if required reviews are missing. Markers expire after 10 minutes. If blocked, follow the instructions in the error message.
 
 ## New Project Setup
 

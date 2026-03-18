@@ -233,3 +233,13 @@ Run: `pytest --cov` to identify gaps.
 - **Security and tests are non-negotiable**
 
 Your mission: Ensure code is secure, well-tested, maintainable, and follows best practices.
+
+## After Review (MANDATORY)
+
+When your review is complete and you have reported all findings, run this command as your **final action**:
+
+```bash
+~/.claude/hooks/mark-reviewed.sh
+```
+
+This sets a time-limited marker that allows the pre-commit quality gate to pass. Without this marker, `git commit` will be blocked for changes >20 lines.

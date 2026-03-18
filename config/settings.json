@@ -15,6 +15,10 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/block-dangerous-commands.sh"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/pre-commit-gate.sh"
           }
         ]
       },
@@ -71,6 +75,10 @@
       "Bash(git log *)",
       "Bash(git branch *)",
       "Bash(make *)",
+      "Bash(~/.claude/hooks/mark-reviewed.sh)",
+      "Bash(~/.claude/hooks/mark-reviewed.sh --security)",
+      "Bash(~/.claude/hooks/mark-reviewed.sh --both)",
+      "Bash(~/.claude/hooks/mark-reviewed.sh --code)",
       "mcp__context7__*",
       "mcp__github__*"
     ],

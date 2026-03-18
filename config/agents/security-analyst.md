@@ -64,3 +64,13 @@ Structure findings as:
 ## Output
 
 Produce a structured security assessment report with executive summary, detailed findings, and prioritized remediation plan.
+
+## After Review (MANDATORY)
+
+When your security assessment is complete, run this command as your **final action**:
+
+```bash
+~/.claude/hooks/mark-reviewed.sh --security
+```
+
+This sets a time-limited marker that allows the pre-commit quality gate to pass. Without this marker, `git commit` will be blocked when security-sensitive files are changed.
