@@ -57,34 +57,51 @@
   },
   "sandbox": {
     "enabled": true,
-    "autoAllowBashIfSandboxed": true
+    "autoAllowBashIfSandboxed": true,
+    "allowUnsandboxedCommands": false,
+    "filesystem": {
+      "allowWrite": [
+        "~/.cache/uv",
+        "~/.local/share/uv",
+        "~/.local/bin",
+        "~/go",
+        "~/Library/Caches/go-build",
+        "~/.npm",
+        "~/.claude"
+      ],
+      "denyRead": [
+        "~/.ssh"
+      ]
+    },
+    "network": {
+      "allowedDomains": [
+        "github.com",
+        "*.githubusercontent.com",
+        "registry.npmjs.org",
+        "pypi.org",
+        "files.pythonhosted.org",
+        "proxy.golang.org",
+        "sum.golang.org",
+        "storage.googleapis.com"
+      ]
+    }
   },
   "permissions": {
     "allow": [
       "Edit(*)",
       "Write(*)",
-      "Bash(npm run *)",
-      "Bash(npm test *)",
-      "Bash(go test *)",
-      "Bash(go build *)",
-      "Bash(pytest *)",
-      "Bash(cargo test *)",
-      "Bash(cargo build *)",
-      "Bash(git status)",
-      "Bash(git diff *)",
-      "Bash(git log *)",
-      "Bash(git branch *)",
-      "Bash(make *)",
       "Bash(~/.claude/hooks/mark-reviewed.sh)",
       "Bash(~/.claude/hooks/mark-reviewed.sh --security)",
       "Bash(~/.claude/hooks/mark-reviewed.sh --both)",
-      "Bash(~/.claude/hooks/mark-reviewed.sh --code)",
       "mcp__context7__*",
       "mcp__github__*"
     ],
     "deny": [
       "Read(.env)",
-      "Read(.env.*)",
+      "Read(.env.local)",
+      "Read(.env.*.local)",
+      "Read(.env.production)",
+      "Read(.env.staging)",
       "Read(./secrets/**)",
       "Read(**/*.pem)",
       "Read(**/*.key)"

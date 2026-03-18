@@ -6,6 +6,14 @@ This document explains the carefully designed permission system that auto-approv
 
 ---
 
+## How Auto-Approval Works
+
+> **Primary mechanism**: `autoAllowBashIfSandboxed: true` in settings.json auto-approves **all** sandboxed Bash commands. The explicit `permissions.allow` list is only needed for non-Bash tools (Edit, Write, MCP) and edge cases that run outside the sandbox (like hook scripts). If you see a Bash command listed in `permissions.allow`, it's redundant — sandbox already covers it.
+>
+> **Sandbox expansion**: The sandbox is configured with extended filesystem write paths (`~/.cache/uv`, `~/go`, `~/.npm`, etc.) and allowed network domains (`pypi.org`, `proxy.golang.org`, `registry.npmjs.org`, etc.) so that common dev tools (uv, go, npm, git) run *inside* the sandbox without prompts. `allowUnsandboxedCommands: false` prevents the autonomous sandbox escape hatch — if a command needs a path or domain not listed, it fails rather than silently retrying unsandboxed.
+
+---
+
 ## Design Philosophy
 
 ### Goal
@@ -167,13 +175,15 @@ These operations are **never allowed** for security:
 
 #### Reading Secrets
 ```
-.env, .env.*
-secrets/, credentials/
-*.key, *.pem
-*password*, *secret*
+.env, .env.local, .env.production, .env.staging, .env.*.local
+secrets/, credentials/ (directory-level match)
+*.key, *.pem, *.p12, *.pfx, *.jks, *.keystore
 SSH keys (id_rsa, id_ed25519)
 AWS credentials
 Service account keys
+
+NOT blocked (safe reference files):
+.env.example, .env.template, .env.sample, .env.schema
 ```
 **Why blocked?**
 - Prevents accidental secret exposure

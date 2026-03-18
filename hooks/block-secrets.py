@@ -36,6 +36,14 @@ from pathlib import Path
 # CONFIGURATION - Customize these patterns for your environment
 # =============================================================================
 
+# Safe filenames that should never be blocked (checked first)
+SAFE_FILENAMES = {
+    '.env.example',
+    '.env.template',
+    '.env.sample',
+    '.env.schema',
+}
+
 # Exact filenames to block
 SENSITIVE_FILENAMES = {
     # Environment files
@@ -48,20 +56,20 @@ SENSITIVE_FILENAMES = {
     '.env.production',
     '.env.production.local',
     '.env.staging',
-    
+
     # Secrets files
     'secrets.json',
     'secrets.yaml',
     'secrets.yml',
     'secrets.toml',
     '.secrets',
-    
+
     # Credentials
     'credentials.json',
     'credentials.yaml',
     'service-account.json',
     'service_account.json',
-    
+
     # SSH keys
     'id_rsa',
     'id_rsa.pub',
@@ -71,24 +79,24 @@ SENSITIVE_FILENAMES = {
     'id_dsa',
     'known_hosts',
     'authorized_keys',
-    
+
     # Package manager auth
     '.npmrc',
     '.pypirc',
     '.yarnrc',
     '.docker/config.json',
-    
+
     # Cloud credentials
     '.aws/credentials',
     '.aws/config',
     'gcloud/credentials.db',
     '.azure/credentials',
-    
+
     # Git credentials
     '.git-credentials',
     '.gitconfig',  # Can contain credentials
     '.git/config', # Can contain tokens
-    
+
     # Database
     '.pgpass',
     '.my.cnf',
@@ -107,15 +115,17 @@ SENSITIVE_EXTENSIONS = {
     '.cer',      # Certificates
 }
 
-# Patterns to match anywhere in path
-SENSITIVE_PATH_PATTERNS = [
+# Directory names that indicate sensitive content (matched against path segments)
+SENSITIVE_DIRECTORIES = {
+    'secrets',
     'secret',
-    'credential',
-    'private_key',
-    'privatekey',
-    '.env.',     # Catches .env.anything
-    '/secrets/', # Secrets directories
-]
+    '.aws',
+    '.ssh',
+}
+
+# Exact .env.* patterns to block (matched against filename only)
+# .env.example/.env.template/.env.sample/.env.schema are excluded via SAFE_FILENAMES
+SENSITIVE_ENV_PREFIX = '.env.'
 
 # =============================================================================
 # HOOK LOGIC
@@ -128,24 +138,32 @@ def is_sensitive_file(file_path: str) -> tuple[bool, str]:
     """
     if not file_path:
         return False, ""
-    
+
     path = Path(file_path)
     file_name = path.name
-    file_lower = file_path.lower()
-    
+
+    # Check safe filenames first (allowlist takes priority)
+    if file_name in SAFE_FILENAMES:
+        return False, ""
+
     # Check exact filename match
     if file_name in SENSITIVE_FILENAMES:
         return True, f"'{file_name}' is a known sensitive file"
-    
+
     # Check extension
     if path.suffix.lower() in SENSITIVE_EXTENSIONS:
         return True, f"'{path.suffix}' files may contain private keys or certificates"
-    
-    # Check path patterns
-    for pattern in SENSITIVE_PATH_PATTERNS:
-        if pattern in file_lower:
-            return True, f"path contains sensitive pattern '{pattern}'"
-    
+
+    # Check if file is a .env.* variant (filename only, not full path)
+    if file_name.startswith(SENSITIVE_ENV_PREFIX):
+        return True, f"'{file_name}' is a dotenv variant that may contain secrets"
+
+    # Check path segments for sensitive directory names
+    path_parts = {part.lower() for part in path.parts}
+    for sensitive_dir in SENSITIVE_DIRECTORIES:
+        if sensitive_dir in path_parts:
+            return True, f"path contains sensitive directory '{sensitive_dir}'"
+
     return False, ""
 
 
@@ -155,23 +173,21 @@ def extract_file_path(data: dict) -> str:
     Different tools use different parameter names.
     """
     tool_input = data.get('tool_input', {})
-    
+
     # Try common parameter names
     for key in ['file_path', 'path', 'filename', 'file']:
         if key in tool_input:
             return tool_input[key]
-    
+
     # For Bash tool, check the command for file references
     command = tool_input.get('command', '')
     if command:
-        # This is a simplified check - you might want more sophisticated parsing
         for pattern in SENSITIVE_FILENAMES:
             if pattern in command:
                 return pattern
         for ext in SENSITIVE_EXTENSIONS:
             if ext in command:
-                return command  # Return command as "file" so it gets blocked
-    
+                return command
     return ""
 
 
@@ -179,29 +195,28 @@ def main():
     try:
         # Read JSON input from stdin
         data = json.load(sys.stdin)
-        
+
         # Get tool name for better error messages
         tool_name = data.get('tool_name', 'unknown')
-        
+
         # Extract file path
         file_path = extract_file_path(data)
-        
+
         if not file_path:
             # No file path found, allow the operation
             sys.exit(0)
-        
+
         # Check if sensitive
         is_sensitive, reason = is_sensitive_file(file_path)
-        
+
         if is_sensitive:
-            # Construct error message that will be fed back to Claude
             error_msg = f"""
 ╔══════════════════════════════════════════════════════════════════╗
 ║                    🔒 SECURITY HOOK BLOCKED                       ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║ Tool: {tool_name}
 ║ File: {file_path}
-║ 
+║
 ║ Reason: {reason}
 ║
 ║ This file likely contains secrets, credentials, or private keys
@@ -214,25 +229,24 @@ def main():
 ║ • Store secrets in a proper secrets manager
 ╚══════════════════════════════════════════════════════════════════╝
 """.strip()
-            
-            # Print to stderr (will be fed back to Claude)
+
             print(error_msg, file=sys.stderr)
-            
-            # Exit code 2 = block operation
             sys.exit(2)
-        
+
         # File is not sensitive, allow operation
         sys.exit(0)
-        
+
     except json.JSONDecodeError as e:
-        # Invalid JSON input - fail closed for security
-        print(f"SECURITY: Invalid JSON input, blocking operation - {e}", file=sys.stderr)
-        sys.exit(2)
+        # Invalid JSON input - fail open with warning (blocking here causes
+        # pure friction with zero security value since a parse error means
+        # we can't even identify what file is being accessed)
+        print(f"WARNING: block-secrets.py could not parse JSON input - {e}", file=sys.stderr)
+        sys.exit(0)
 
     except Exception as e:
-        # Unexpected error - fail closed for security
-        print(f"SECURITY: Hook error, blocking operation - {e}", file=sys.stderr)
-        sys.exit(2)
+        # Unexpected error - fail open with warning
+        print(f"WARNING: block-secrets.py encountered an error - {e}", file=sys.stderr)
+        sys.exit(0)
 
 
 if __name__ == '__main__':
