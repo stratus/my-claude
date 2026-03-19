@@ -25,7 +25,7 @@ If project lacks `.claude/CLAUDE.md`: **ASK** user to create one before coding.
 Before implementing any feature, confirm:
 - User story exists: "As a [user type], I can [action] so that [outcome]"
 - Acceptance criteria are defined (how to manually verify it works)
-- For projects with >2 components: architecture diagram exists or will be created
+- CUJs and ADs are documented (or explicitly opted out) — see `cujs-and-ads` rule
 
 ## Core Principles
 
@@ -69,7 +69,7 @@ Claude Code has persistent auto memory at `~/.claude/projects/*/memory/`.
 Before declaring any feature/task complete:
 1. **User perspective**: How would someone who's never seen this verify it works?
 2. **Docs check**: Are all new/changed features reflected in documentation?
-3. **Diagram check**: Does architecture doc still accurately reflect the system?
+3. **CUJ/AD check**: Are Critical User Journeys and Architecture Decisions still current?
 4. **Demo ready**: Can you walk through the primary use case right now?
 
 If uncertain on any point, **ask the user** rather than assuming complete.

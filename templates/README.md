@@ -9,6 +9,8 @@ Domain-specific CLAUDE.md templates for new projects. These extend the global `~
 | `nextjs/` | Next.js 15+ web apps with App Router, Tailwind, shadcn/ui |
 | `react-native/` | React Native/Expo mobile apps |
 | `go-cli/` | Go CLI tools and services |
+| `cuj-template.md` | Critical User Journey document scaffold |
+| `ad-template.md` | Architecture Decision Record (ADR) scaffold |
 
 ## Usage
 

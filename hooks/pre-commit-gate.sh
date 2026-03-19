@@ -145,6 +145,56 @@ if [[ -n "$USER_FACING" && -z "$DOC_CHANGES" ]]; then
     WARNINGS="${WARNINGS}   Consider running the docs-updater agent before or after committing.\n"
 fi
 
+# Warning (non-blocking): CUJ/AD staleness check
+STALENESS_THRESHOLD=$((90 * 86400))  # 90 days in seconds
+CURRENT_EPOCH=$(date +%s)
+
+# Check CUJs for staleness (only if directory exists and not opted out)
+if [[ -d "docs/cujs" && ! -f "docs/cujs/.opted-out" ]]; then
+    for cuj_file in docs/cujs/*.md; do
+        [[ -f "$cuj_file" ]] || continue
+        # Extract last-verified date from frontmatter
+        verified_date=$(sed -n '/^---$/,/^---$/{ s/^last-verified:[[:space:]]*//p; }' "$cuj_file" | head -1)
+        if [[ -n "$verified_date" && "$verified_date" != "YYYY-MM-DD" ]]; then
+            # Convert date to epoch (macOS date -j)
+            verified_epoch=$(date -j -f "%Y-%m-%d" "$verified_date" "+%s" 2>/dev/null || echo "0")
+            age=$((CURRENT_EPOCH - verified_epoch))
+            if [[ $age -gt $STALENESS_THRESHOLD ]]; then
+                cuj_name=$(basename "$cuj_file")
+                WARNINGS="${WARNINGS}📋 CUJ docs/cujs/$cuj_name may be stale (last verified: $verified_date)\n"
+            fi
+        fi
+    done
+
+    # Check if any changed files are mentioned in CUJ content
+    while IFS= read -r changed; do
+        [[ -n "$changed" ]] || continue
+        module=$(basename "$changed" | sed 's/\.[^.]*$//')
+        match=$(grep -rl "$module" docs/cujs/*.md 2>/dev/null | head -1 || true)
+        if [[ -n "$match" ]]; then
+            cuj_name=$(basename "$match")
+            WARNINGS="${WARNINGS}📋 Changed file $changed may affect CUJ docs/cujs/$cuj_name — consider reviewing.\n"
+        fi
+    done <<< "$CHANGED_FILES"
+fi
+
+# Check ADs for staleness (only if directory exists and not opted out)
+if [[ -d "docs/decisions" && ! -f "docs/decisions/.opted-out" ]]; then
+    for ad_file in docs/decisions/*.md; do
+        [[ -f "$ad_file" ]] || continue
+        # Extract date from frontmatter
+        ad_date=$(sed -n '/^---$/,/^---$/{ s/^date:[[:space:]]*//p; }' "$ad_file" | head -1)
+        if [[ -n "$ad_date" && "$ad_date" != "YYYY-MM-DD" ]]; then
+            ad_epoch=$(date -j -f "%Y-%m-%d" "$ad_date" "+%s" 2>/dev/null || echo "0")
+            age=$((CURRENT_EPOCH - ad_epoch))
+            if [[ $age -gt $STALENESS_THRESHOLD ]]; then
+                ad_name=$(basename "$ad_file")
+                WARNINGS="${WARNINGS}📐 AD docs/decisions/$ad_name may be stale (date: $ad_date)\n"
+            fi
+        fi
+    done
+fi
+
 # ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------

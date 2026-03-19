@@ -59,7 +59,28 @@ Run the **docs-updater** agent in read-only mode:
 
 Capture the output.
 
-### 5. Consolidated Report
+### 5. CUJ & Architecture Decision Coverage
+
+Check the project's Critical User Journeys and Architecture Decisions:
+
+**Existence:**
+- Check if `docs/cujs/` exists. If `.opted-out` sentinel present, report "Opted out" (neutral). If missing with no sentinel, flag as "Missing — not documented and not explicitly opted out".
+- Check if `docs/decisions/` exists. Same logic.
+- Scan for non-standard locations (`docs/architecture.md`, `docs/adr/`, `docs/adrs/`, `docs/architecture-decisions/`, `DECISIONS.md`, `docs/user-journeys/`, `docs/flows/`, `docs/use-cases/`) and flag with migration suggestion.
+
+**Freshness:**
+- For each CUJ file: check `last-verified` in frontmatter. Flag if older than 90 days.
+- For each AD file: check `date` in frontmatter. Flag if older than 90 days.
+- Note any with `status: deprecated` or `status: superseded` (informational, not a finding).
+
+**Coverage:**
+- Do major code modules/features have at least one CUJ? Look at route handlers, pages, CLI commands — these suggest user flows.
+- Are there ADs with `status: accepted` that reference components no longer in the codebase?
+- Are there recent architectural changes (new dependencies, new services, new integration patterns) without a corresponding AD?
+
+Capture findings for the consolidated report.
+
+### 6. Consolidated Report
 
 Combine findings into a single structured report:
 
@@ -103,8 +124,19 @@ Combine findings into a single structured report:
 | Current / Stale / Missing | API docs |
 | Current / Stale / Missing | Setup guide |
 | Current / Stale / Missing | Architecture |
+| Current / Stale / Missing / Opted-out | Critical User Journeys |
+| Current / Stale / Missing / Opted-out | Architecture Decisions |
 
 [Specific gaps and recommendations]
+
+## CUJ & AD Coverage
+
+| Type | Count | Fresh | Stale (>90d) | Deprecated |
+|------|-------|-------|-------------|------------|
+| CUJs | N | N | N | N |
+| ADs  | N | N | N | N |
+
+[Specific findings: uncovered flows, stale entries, superseded-but-not-replaced ADs, non-standard locations detected]
 
 ## Priority Actions
 

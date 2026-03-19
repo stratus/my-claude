@@ -36,6 +36,8 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 | `skills/*/SKILL.md` | `~/.claude/commands/*/SKILL.md` | Slash command skills |
 | `hooks/*` | `~/.claude/hooks/` | Event hooks (made executable) |
 | `config/statusline/` | `~/.claude/statusline/` | Statusline config |
+| `templates/cuj-template.md` | (manual copy) | CUJ document template |
+| `templates/ad-template.md` | (manual copy) | Architecture Decision Record template |
 | `templates/mcp.json.example` | (manual copy) | Recommended MCP servers for new projects |
 
 ## Conventions
