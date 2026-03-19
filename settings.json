@@ -5,7 +5,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "/Users/gfranco/.claude/statusline.sh"
+    "command": "~/.claude/statusline.sh"
   },
   "sandbox": {
     "enabled": true,
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/gfranco/.claude/hooks/block-dangerous-commands.sh"
+            "command": "~/.claude/hooks/block-dangerous-commands.sh"
           }
         ]
       },
@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /Users/gfranco/.claude/hooks/block-secrets.py"
+            "command": "python3 ~/.claude/hooks/block-secrets.py"
           }
         ]
       }
@@ -38,7 +38,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/gfranco/.claude/hooks/after-edit.sh"
+            "command": "~/.claude/hooks/after-edit.sh"
           }
         ]
       }

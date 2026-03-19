@@ -15,15 +15,6 @@ This repository contains my Claude Code configuration, including:
 
 ## Installation
 
-### Via bootstrap-my-mac
-
-```bash
-# Full bootstrap includes my-claude
-curl -fsSL https://raw.githubusercontent.com/stratus/bootstrap-my-mac/main/bootstrap.sh | bash
-```
-
-### Standalone
-
 ```bash
 git clone git@github.com:stratus/my-claude.git ~/my-claude
 cd ~/my-claude
@@ -160,5 +151,4 @@ make install
 
 ## Related
 
-- [bootstrap-my-mac](https://github.com/stratus/bootstrap-my-mac) - Full Mac setup
 - [claude-code-mastery](https://github.com/TheDecipherist/claude-code-mastery) - Community resources

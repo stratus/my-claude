@@ -205,9 +205,10 @@ To update your configuration templates from this repository:
 # Backup your current configuration
 cp -r ~/.claude ~/.claude.backup
 
-# Copy updated templates (preserves existing files)
-cd ~/.bootstrap-my-mac
-./scripts/setup-claude.sh
+# Pull latest and reinstall
+cd ~/my-claude
+git pull
+make install
 ```
 
-The setup script will only copy files that don't exist, preserving your customizations.
+The install script compares checksums and prompts before overwriting local changes.

@@ -33,7 +33,7 @@ Auto memory lives at:
 ~/.claude/projects/<project-slug>/memory/<topic>.md
 ```
 
-The project slug is derived from the working directory path (e.g., `-Users-gfranco-my-project`).
+The project slug is derived from the working directory path (e.g., `-Users-jane-my-project`).
 
 **Important**: This path is local-only and never committed to git. It's safe for project-specific details.
 
