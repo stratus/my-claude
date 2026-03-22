@@ -3,6 +3,7 @@
   "preferredNotifyMethod": "terminal_bell",
   "alwaysThinkingEnabled": true,
   "outputStyle": "Explanatory",
+  "voiceEnabled": true,
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline/statusline-wrapper.sh"
@@ -119,7 +120,9 @@
       "Start with /plan for complex features before coding",
       "Use Esc Esc or /rewind when Claude goes off-track",
       "Say 'ultrathink' in prompts for high-effort reasoning",
-      "Use /context to check context window usage"
+      "Use /context to check context window usage",
+      "Use /voice for push-to-talk dictation (hold Space to record)",
+      "Use /rc to control this session from your phone via claude.ai/code"
     ],
     "excludeDefault": false
   },
@@ -133,6 +136,8 @@
     "Use /compact at ~50% context (auto-compact is set to 50%) — don't wait until you're out of space",
     "Use /clear between unrelated tasks — fresh context prevents drift and hallucination",
     "Use Esc Esc or /rewind when Claude goes off-track — rewind beats fixing in-place",
-    "Copy templates/mcp.json.example to .mcp.json in new projects for Context7 + Playwright"
+    "Copy templates/mcp.json.example to .mcp.json in new projects for Context7 + Playwright",
+    "Use /rc to remote-control sessions from mobile — scan QR with Claude app",
+    "Use /voice for hands-free coding — push-to-talk with Space key"
   ]
 }
