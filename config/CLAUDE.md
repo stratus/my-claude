@@ -26,6 +26,7 @@ Before implementing any feature, confirm:
 - User story exists: "As a [user type], I can [action] so that [outcome]"
 - Acceptance criteria are defined (how to manually verify it works)
 - CUJs and ADs are documented (or explicitly opted out) — see `cujs-and-ads` rule
+- **Web projects**: Playwright MCP is configured in `.mcp.json` — see `mcp-playwright` rule
 
 ## Core Principles
 
