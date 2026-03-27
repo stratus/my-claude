@@ -142,6 +142,8 @@
     "Use Esc Esc or /rewind when Claude goes off-track — rewind beats fixing in-place",
     "Copy templates/mcp.json.example to .mcp.json in new projects for Context7 + Playwright",
     "Use /rc to remote-control sessions from mobile — scan QR with Claude app",
-    "Use /voice for hands-free coding — push-to-talk with Space key"
+    "Use /voice for hands-free coding — push-to-talk with Space key",
+    "Use /polish before releasing — it fixes audit findings and generates a readiness score 0-100",
+    "Use /learnings after completing features — compounds knowledge across sessions"
   ]
 }
