@@ -66,7 +66,9 @@ Before implementing any feature, confirm:
 
 **Skip agents** for trivial changes (<20 lines, non-security, no user-facing impact).
 
-**Quality escalation**: Use `/polish` (opus) for pre-release quality sweep — it dispatches multiple agents and generates a readiness score.
+Most agents are dispatched automatically by `/audit` and `/polish` — you rarely need to invoke them directly.
+
+**Simple workflow**: `/plan` → `/implement` → `/polish`. Everything else is automatic.
 
 ## Memory & Learning
 

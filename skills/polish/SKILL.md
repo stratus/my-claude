@@ -182,3 +182,24 @@ Present a structured release readiness report:
 ```
 
 End with the top 3 priority items if the score is below 80, or "Ready to ship!" if >= 80.
+
+### 9. Capture Learnings (Final Step)
+
+After presenting the report, reflect on the session and save knowledge for future sessions:
+
+1. **What was surprising?** — Issues the audit found that weren't expected. These indicate blind spots.
+2. **What recurred?** — Problems that have appeared before (check memory for similar entries). If an issue has appeared twice, **escalate it**:
+   - Suggest adding a rule to `config/rules/` or `.claude/CLAUDE.md`
+   - Suggest a hook if it's automatically detectable
+   - Suggest updating an agent definition if a reviewer should have caught it
+3. **What went well?** — Approaches worth repeating. Save as `feedback` memory so future sessions follow the same pattern.
+
+Save each worthwhile learning to the project's memory (`~/.claude/projects/*/memory/`), then tell the user what was saved:
+
+```markdown
+### Learnings Saved
+- [memory title] — [one-line summary of what was learned]
+- [escalation suggestion if any pattern appeared twice]
+```
+
+This closes the learning loop: `/polish` finds issues → fixes them → remembers them → future sessions avoid them.

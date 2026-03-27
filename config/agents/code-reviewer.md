@@ -24,6 +24,16 @@ When reviewing code, you will:
 
 When invoked, execute these steps:
 
+### 0. Check Project Memory
+
+Before reviewing, check if there are project-specific lessons from prior sessions:
+
+```bash
+ls ~/.claude/projects/*/memory/*.md 2>/dev/null | head -5
+```
+
+If memory files exist for the current project, scan them for `feedback` entries — especially anti-patterns, known issues, and past review findings. Apply these as **additional review criteria** specific to this project. For example, if memory says "never mock the database in this project," flag any new database mocks.
+
 ### 1. Identify Changes
 ```bash
 git status
