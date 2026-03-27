@@ -1,6 +1,7 @@
 ---
 name: security-audit
 description: Audit code and dependencies for security vulnerabilities. Use when reviewing PRs, checking dependencies, preparing for deployment, or when user mentions security, vulnerabilities, or audit.
+model: sonnet
 argument-hint: "[file-or-directory]"
 allowed-tools: Read, Grep, Glob, Bash(grep *), Bash(npm audit), Bash(pip-audit), Bash(govulncheck *), Bash(cargo audit), Bash(git log *)
 ---

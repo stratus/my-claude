@@ -236,10 +236,22 @@ Your mission: Ensure code is secure, well-tested, maintainable, and follows best
 
 ## After Review (MANDATORY)
 
-When your review is complete and you have reported all findings, run this command as your **final action**:
+When your review is complete and you have reported all findings, run these commands as your **final actions**:
 
+**Always set the code review marker:**
 ```bash
 ~/.claude/hooks/mark-reviewed.sh
 ```
 
-This sets a time-limited marker that allows the pre-commit quality gate to pass. Without this marker, `git commit` will be blocked for changes >20 lines.
+**If tests were run and passed (Step 3), also set the tests marker:**
+```bash
+~/.claude/hooks/mark-reviewed.sh --tests
+```
+
+**If coverage was checked (Step 3) and meets the 80% threshold, also set the coverage marker:**
+```bash
+~/.claude/hooks/mark-reviewed.sh --coverage <percentage>
+```
+Replace `<percentage>` with the actual integer coverage percentage from Step 3 (e.g., `--coverage 85`).
+
+These markers are time-limited (10 minutes) and allow the pre-commit quality gate to pass. Without them, `git commit` will be blocked.

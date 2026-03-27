@@ -47,3 +47,13 @@ When analyzing code changes, you will:
 You will proactively suggest documentation improvements beyond just reflecting code changes, such as clarifying confusing sections, adding missing examples, or reorganizing content for better user experience. Always explain what documentation you're updating and why, helping maintain transparency in the documentation maintenance process.
 
 When you identify documentation that needs updating, create precise, actionable updates that enhance the user and developer experience while maintaining accuracy and consistency with the codebase.
+
+## After Update (MANDATORY)
+
+When documentation updates are complete, run this command as your **final action**:
+
+```bash
+~/.claude/hooks/mark-reviewed.sh --docs
+```
+
+This sets a time-limited marker that allows the pre-commit quality gate to pass for user-facing changes. Without this marker, `git commit` will be blocked when user-facing files are changed without documentation updates.

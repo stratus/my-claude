@@ -94,6 +94,10 @@
       "Bash(~/.claude/hooks/mark-reviewed.sh)",
       "Bash(~/.claude/hooks/mark-reviewed.sh --security)",
       "Bash(~/.claude/hooks/mark-reviewed.sh --both)",
+      "Bash(~/.claude/hooks/mark-reviewed.sh --tests)",
+      "Bash(~/.claude/hooks/mark-reviewed.sh --docs)",
+      "Bash(~/.claude/hooks/mark-reviewed.sh --all)",
+      "Bash(~/.claude/hooks/mark-reviewed.sh --coverage *)",
       "mcp__context7__*",
       "mcp__github__*"
     ],

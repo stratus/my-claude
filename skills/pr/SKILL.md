@@ -1,6 +1,7 @@
 ---
 name: pr
 description: Create a pull request with proper title, description, test plan, and linked issues. Use when ready to submit changes for review.
+model: haiku
 argument-hint: "[base-branch]"
 ---
 

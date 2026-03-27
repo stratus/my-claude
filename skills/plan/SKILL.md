@@ -1,6 +1,7 @@
 ---
 name: plan
 description: Enter planning mode — interview the user, design a phased approach, and produce an implementation plan before writing code.
+model: sonnet
 argument-hint: "[feature or task description]"
 ---
 

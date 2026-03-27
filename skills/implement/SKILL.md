@@ -1,6 +1,7 @@
 ---
 name: implement
 description: Start implementing a feature with user story validation, phased execution, and quality gates. Use after planning is complete.
+model: sonnet
 argument-hint: "[feature description or phase number]"
 ---
 
@@ -39,6 +40,12 @@ After each phase, check:
 - [ ] No linter errors
 - [ ] No security issues introduced
 - [ ] Code follows project conventions
+
+After passing the quality gate, set review markers so the pre-commit gate allows the commit:
+```bash
+~/.claude/hooks/mark-reviewed.sh --tests
+~/.claude/hooks/mark-reviewed.sh --coverage <percentage>
+```
 
 ### 4. Checkpoint
 After passing the quality gate:

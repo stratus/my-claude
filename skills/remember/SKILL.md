@@ -1,6 +1,7 @@
 ---
 name: remember
 description: Save learnings, patterns, and preferences to persistent memory. Use when the user says "remember this", encounters a hard-won fix, or wants to preserve context across sessions.
+model: haiku
 ---
 
 # Remember Skill
