@@ -26,12 +26,33 @@ Before writing code, verify:
 
 If any are missing, ask the user before proceeding.
 
+### 1b. CUJ-Driven Acceptance Criteria
+
+Check if `docs/cujs/` exists and is not opted out. If CUJs exist:
+
+1. Search for CUJs whose content mentions the feature being implemented
+2. For each matching CUJ, extract its **Success Criteria** and **Error Paths**
+3. Use these as additional acceptance criteria for the implementation:
+   - Success Criteria → must-pass assertions in integration tests
+   - Error Paths → must-handle error cases with proper UX
+4. If implementing a wholly new user flow with no matching CUJ, suggest creating one:
+   > "This feature introduces a new user flow that isn't documented as a CUJ. Want me to scaffold one with `/cuj`?"
+
+### 1c. AD Compliance Check
+
+Check if `docs/decisions/` exists and is not opted out. If ADs exist:
+
+1. Search for ADs relevant to the feature (matching technology, component, or pattern)
+2. Verify the planned implementation aligns with accepted decisions
+3. If the plan contradicts an AD, **stop and flag it** before writing code:
+   > "This implementation would use [X], but AD [number] chose [Y] because [reason]. Should we proceed anyway or create a new AD to supersede it?"
+
 ### 2. Execute Phase
 For each phase:
-1. Write the code (follow existing patterns)
-2. Write tests alongside implementation
+1. Write the code (follow existing patterns, respect ADs)
+2. Write tests alongside implementation (including CUJ-derived acceptance tests)
 3. Run tests and linter
-4. Verify acceptance criteria
+4. Verify acceptance criteria (both explicit and CUJ-derived)
 
 ### 3. Quality Gate
 After each phase, check:

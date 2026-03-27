@@ -18,11 +18,19 @@ The opposite of `/plan`. Instead of "what should we build?", this asks "is this 
 
 ## Process
 
-### 1. Run Project Audit
+### 1. Run Project Audit + Specialized Reviews
 
-First, get a comprehensive health report:
+First, get a comprehensive health report using multiple specialized agents:
 
 > Run the `/audit` skill to produce a full project health report covering code quality, security, documentation, and CUJ/AD coverage. Capture all findings.
+
+Then dispatch specialized agents as appropriate:
+- **`cuj-verifier`** — Walk through every documented CUJ step-by-step and verify it works
+- **`architect-reviewer`** — Check AD compliance and structural health
+- **`integration-tester`** — Identify flows lacking integration/E2E tests and write them
+- **`ux-reviewer`** (web projects only) — Check loading/empty/error states, accessibility, responsive design
+
+These agents run in addition to the audit's code-reviewer, security-analyst, and docs-updater.
 
 ### 2. Fix Findings (Not Just Report)
 

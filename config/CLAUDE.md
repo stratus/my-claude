@@ -8,15 +8,22 @@ Detailed rules auto-load from `~/.claude/rules/`.
 ## Workflow After Code Changes
 
 For changes **>20 lines or touching security/validation**:
-1. Run `code-reviewer` agent (sonnet) — it will mark review done automatically
-2. If security-sensitive files changed: run `security-analyst` agent — marks security review done
-3. Run `docs-updater` agent (haiku) → For user-facing changes
-4. Verify 80%+ test coverage, linter passes, all tests pass
-5. Commit — the **pre-commit gate hook enforces steps 1-2**
+1. Run `code-reviewer` agent (sonnet) — marks code review + tests + coverage done
+2. If security-sensitive files changed: run `security-analyst` agent — marks security done
+3. Run `docs-updater` agent (haiku) → For user-facing changes — marks docs done
+4. Commit — the **pre-commit gate enforces all 5 gates**
 
-For **small changes (<20 lines, non-security)**: Run tests and linter only.
+For **small changes (<20 lines, non-security)**: Run tests and linter, set markers manually.
 
-**Pre-commit gate**: A hook blocks `git commit` if required reviews are missing. Markers expire after 10 minutes. If blocked, follow the instructions in the error message.
+**Pre-commit gate** (5 blocking gates):
+1. Code review (>20 lines changed)
+2. Security review (sensitive files)
+3. Tests must pass
+4. Coverage must meet 80%
+5. Docs review (user-facing changes)
+
+Markers expire after 10 minutes. If blocked, follow the error message instructions.
+Use `~/.claude/hooks/mark-reviewed.sh --all` as escape hatch when consciously skipping.
 
 ## New Project Setup
 
@@ -52,8 +59,14 @@ Before implementing any feature, confirm:
 | `code-reviewer` | After code changes >20 lines or security-related | sonnet |
 | `docs-updater` | After code review, for user-facing changes | haiku |
 | `debug-specialist` | Errors, test failures, unexpected behavior | sonnet |
+| `integration-tester` | When unit tests aren't enough — E2E, API, cross-component tests | sonnet |
+| `cuj-verifier` | Verify documented CUJs actually work, catch doc/code drift | sonnet |
+| `architect-reviewer` | Cross-component changes, new deps, AD compliance | opus |
+| `ux-reviewer` | Web projects: loading/empty/error states, a11y, responsive | sonnet |
 
 **Skip agents** for trivial changes (<20 lines, non-security, no user-facing impact).
+
+**Quality escalation**: Use `/polish` (opus) for pre-release quality sweep — it dispatches multiple agents and generates a readiness score.
 
 ## Memory & Learning
 
