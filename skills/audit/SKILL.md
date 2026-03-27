@@ -7,7 +7,7 @@ argument-hint: "[focus-area]"
 
 # Project Audit Skill
 
-Run all quality agents in read-only mode against the current project. Produces a consolidated report covering code quality, security posture, and documentation freshness.
+Run all quality agents in read-only mode against the current project. Produces a consolidated report covering code quality, security, documentation, CUJ/AD coverage, architecture, and (for web projects) UX quality.
 
 ## When to Use This Skill
 
@@ -15,6 +15,7 @@ Run all quality agents in read-only mode against the current project. Produces a
 - Onboarding to a new codebase — understand its current state
 - After merging a large PR or completing a feature branch
 - User says "audit", "review the project", "check health", "assess quality"
+- Before running `/polish` (which builds on audit findings)
 
 ## Process
 
@@ -34,7 +35,13 @@ Identify:
 - Velocity of recent changes
 - Whether a `.claude/CLAUDE.md` exists
 
-If an optional `[focus-area]` argument was provided (e.g. "auth", "api", "frontend"), narrow the scope of all three agents to that area.
+Detect project type for agent selection:
+- **All projects**: code-reviewer, security-analyst, docs-updater, architect-reviewer
+- **Projects with CUJs**: cuj-verifier
+- **Web projects** (has package.json with frontend deps, HTML/JSX/TSX): ux-reviewer
+- **Projects with test gaps**: integration-tester
+
+If an optional `[focus-area]` argument was provided (e.g. "auth", "api", "frontend"), narrow the scope of all agents to that area.
 
 ### 2. Code Quality Review
 
@@ -49,6 +56,14 @@ Capture the output.
 Run the **security-analyst** agent in read-only mode:
 
 > Perform a security assessment of this project. Do NOT modify any files — report findings only. Check for: hardcoded secrets, dependency vulnerabilities, injection risks, auth/session issues, and OWASP Top 10 patterns. Run `npm audit` / `pip-audit` / `govulncheck` / `cargo audit` as appropriate for the project type.
+
+Capture the output.
+
+### 3b. Architecture Review (if ADs exist)
+
+Run the **architect-reviewer** agent in read-only mode:
+
+> Review this project's architecture against its documented Architecture Decisions. Do NOT modify any files — report findings only. Check for: AD violations, undocumented architectural choices (new dependencies, new services, new patterns), coupling/cohesion issues, and layer violations.
 
 Capture the output.
 
@@ -80,6 +95,30 @@ Check the project's Critical User Journeys and Architecture Decisions:
 - Are there recent architectural changes (new dependencies, new services, new integration patterns) without a corresponding AD?
 
 Capture findings for the consolidated report.
+
+### 5b. CUJ Verification (if CUJs exist)
+
+Run the **cuj-verifier** agent in read-only mode:
+
+> Walk through each documented CUJ step-by-step. Do NOT modify any files — report findings only. For each CUJ: verify the code implementing each step exists, check for matching tests, flag drift between documentation and implementation.
+
+Capture the output.
+
+### 5c. Integration Test Coverage
+
+Run the **integration-tester** agent in read-only mode:
+
+> Assess integration test coverage for this project. Do NOT modify any files — report findings only. Identify user flows, API endpoints, and cross-component interactions that lack integration or E2E tests. Cross-reference with CUJs if they exist.
+
+Capture the output.
+
+### 5d. UX Review (web projects only)
+
+If the project has frontend files (JSX, TSX, Vue, Svelte, HTML), run the **ux-reviewer** agent in read-only mode:
+
+> Review the UI quality of this web project. Do NOT modify any files — report findings only. Check for: missing loading/empty/error states, accessibility issues (WCAG 2.1 AA), responsive design gaps, form validation quality, and navigation completeness.
+
+Capture the output.
 
 ### 6. Consolidated Report
 
@@ -130,6 +169,15 @@ Combine findings into a single structured report:
 
 [Specific gaps and recommendations]
 
+## Architecture (if ADs exist)
+
+| AD | Status | Findings |
+|----|--------|----------|
+| [title] | ✅ Compliant / ⚠️ Drift / ❌ Violated | [detail] |
+
+[Structural health: coupling, cohesion, layering]
+[Missing ADs for undocumented decisions]
+
 ## CUJ & AD Coverage
 
 | Type | Count | Fresh | Stale (>90d) | Deprecated |
@@ -137,7 +185,28 @@ Combine findings into a single structured report:
 | CUJs | N | N | N | N |
 | ADs  | N | N | N | N |
 
-[Specific findings: uncovered flows, stale entries, superseded-but-not-replaced ADs, non-standard locations detected]
+### CUJ Verification (if verified)
+
+| CUJ | Status | Steps Verified | Test Coverage |
+|-----|--------|---------------|---------------|
+| [name] | ✅/⚠️/❌ | N/total | Has tests: ✅/❌ |
+
+[Specific findings: uncovered flows, stale entries, doc/code drift]
+
+## Integration Test Coverage
+
+| Flow | Type | Has Tests | Gap |
+|------|------|-----------|-----|
+| [flow] | E2E/API/Component | ✅/❌ | [what's missing] |
+
+## UX Quality (web projects only)
+
+| Area | Quality | Issues |
+|------|---------|--------|
+| UI States | 🟢/🟡/🔴 | [count] |
+| Accessibility | 🟢/🟡/🔴 | [count] |
+| Responsive | 🟢/🟡/🔴 | [count] |
+| Forms | 🟢/🟡/🔴 | [count] |
 
 ## Priority Actions
 
@@ -151,4 +220,4 @@ Combine findings into a single structured report:
 Present the consolidated report. End with:
 - The top 3 priority actions
 - Whether any findings would block a release
-- Suggested next step (e.g. "run `/implement` to address finding #1")
+- Suggested next step (e.g. "run `/polish` to fix findings" or "run `/implement` to address #1")

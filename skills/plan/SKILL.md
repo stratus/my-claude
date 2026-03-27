@@ -31,6 +31,21 @@ If the task description is vague, interview the user using questions:
 - Note potential conflicts or breaking changes
 - Check for existing tests and documentation
 
+### 2b. Check CUJs and ADs
+
+Before designing, check if existing documentation constrains or informs the plan:
+
+**CUJs** (`docs/cujs/`):
+- Does this feature touch an existing CUJ? If so, the CUJ's Success Criteria become acceptance criteria.
+- Does this feature create a new user flow? If so, plan to create a CUJ in the Polish phase.
+
+**ADs** (`docs/decisions/`):
+- Does this feature involve a technology choice covered by an accepted AD? If so, follow the decision.
+- Does this feature require a new architectural decision (new dependency, new service, new pattern)? If so, plan to create an AD in Phase 1 before implementation.
+
+If the feature contradicts an accepted AD, flag it immediately:
+> "This plan would use [X], but AD [number] chose [Y] because [reason]. Should we create a new AD to supersede it?"
+
 ### 3. Design the Approach
 Break into **phases** with clear boundaries:
 
@@ -53,7 +68,9 @@ For each phase, verify:
 - [ ] Tests defined (unit + integration)
 - [ ] No security concerns
 - [ ] Follows existing code patterns
+- [ ] Respects accepted Architecture Decisions
 - [ ] Documentation updates identified
+- [ ] CUJ impacts assessed (new CUJ needed? existing CUJ to update?)
 - [ ] Can be demoed/verified independently
 
 ## Output

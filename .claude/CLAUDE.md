@@ -29,7 +29,7 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 
 | Path | Deploys to | Purpose |
 |------|-----------|---------|
-| `config/CLAUDE.md` | `~/.claude/CLAUDE.md` | Global dev standards (slim, ~90 lines) |
+| `config/CLAUDE.md` | `~/.claude/CLAUDE.md` | Global dev standards (~100 lines) |
 | `config/rules/*.md` | `~/.claude/rules/` | Auto-loaded rule files (split from CLAUDE.md) |
 | `config/settings.json` | `~/.claude/settings.json` | Claude Code settings (hooks, permissions, sandbox) |
 | `config/agents/*.md` | `~/.claude/agents/` | Agent definitions |
@@ -42,16 +42,28 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 
 ## Conventions
 
-### Skills
+### Skills (11 total)
 - One directory per skill under `skills/`
-- Must have `SKILL.md` with YAML frontmatter (`name`, `description`)
+- Must have `SKILL.md` with YAML frontmatter (`name`, `description`, `model`)
+- All skills must have explicit `model:` (haiku for mechanical, sonnet for reasoning, opus for quality ceiling)
 - Sections: When to Use, Process, Output, Examples
+- Key skills: `/plan` → `/implement` → `/audit` → `/polish` → `/learnings`
 - See `skills/commit-messages/SKILL.md` for reference
 
-### Agents
-- Markdown files in `config/agents/`
-- Used via `subagent_type` in Task tool calls
-- See existing agents for format
+### Agents (10 total)
+- Markdown files in `config/agents/` with frontmatter: `model`, `tools`, `maxTurns`, `color`
+- Core workflow: code-reviewer → security-analyst → docs-updater
+- Quality specialists: integration-tester, cuj-verifier, architect-reviewer (opus), ux-reviewer
+- Stack specialists: react-frontend, python-backend, debug-specialist
+
+### Pre-Commit Gate (5 blocking gates)
+- Gate 1: Code review (>20 lines) — marker: `code-reviewed`
+- Gate 2: Security review (sensitive files) — marker: `security-reviewed`
+- Gate 3: Tests pass — marker: `tests-passed`
+- Gate 4: Coverage >= 80% — marker: `coverage-checked` (format: `TIMESTAMP:PERCENTAGE`)
+- Gate 5: Docs review (user-facing changes) — marker: `docs-reviewed`
+- Stale CUJ/AD touching changed code also blocks
+- Escape hatch: `mark-reviewed.sh --all`
 
 ### Hooks
 - Shell scripts in `hooks/`
