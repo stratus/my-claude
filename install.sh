@@ -80,6 +80,19 @@ copy_if_missing() {
     esac
 }
 
+# Deploy configuration files (before statusline — its installer verifies settings.json)
+copy_if_missing "$CONFIG_SOURCE/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+copy_if_missing "$CONFIG_SOURCE/PERMISSIONS-GUIDE.md" "$CLAUDE_DIR/PERMISSIONS-GUIDE.md"
+copy_if_missing "$CONFIG_SOURCE/README.md" "$CLAUDE_DIR/README.md"
+copy_if_missing "$CONFIG_SOURCE/settings.json" "$CLAUDE_DIR/settings.json"
+
+# Rewrite ~/.claude/ paths in settings.json for non-default targets
+if [ "$CLAUDE_DIR" != "$HOME/.claude" ] && [ -f "$CLAUDE_DIR/settings.json" ]; then
+    claude_dir_tilde="${CLAUDE_DIR/#$HOME/\~}"
+    echo "  🔄 Rewriting paths in settings.json → $claude_dir_tilde/"
+    sed -i '' "s|~/.claude/|${claude_dir_tilde}/|g" "$CLAUDE_DIR/settings.json"
+fi
+
 # Install rz1989s/claude-code-statusline
 STATUSLINE_DIR="$CLAUDE_DIR/statusline"
 PRIMARY_STATUSLINE="$HOME/.claude/statusline/statusline.sh"
@@ -115,20 +128,6 @@ if [ -d "$CONFIG_SOURCE/statusline" ]; then
     echo "  📄 Deploying statusline-wrapper.sh"
     cp "$CONFIG_SOURCE/statusline/statusline-wrapper.sh" "$STATUSLINE_DIR/statusline-wrapper.sh"
     chmod +x "$STATUSLINE_DIR/statusline-wrapper.sh"
-fi
-
-# Deploy configuration files
-copy_if_missing "$CONFIG_SOURCE/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
-copy_if_missing "$CONFIG_SOURCE/PERMISSIONS-GUIDE.md" "$CLAUDE_DIR/PERMISSIONS-GUIDE.md"
-copy_if_missing "$CONFIG_SOURCE/README.md" "$CLAUDE_DIR/README.md"
-copy_if_missing "$CONFIG_SOURCE/settings.json" "$CLAUDE_DIR/settings.json"
-
-# Rewrite ~/.claude/ paths in settings.json for non-default targets
-if [ "$CLAUDE_DIR" != "$HOME/.claude" ] && [ -f "$CLAUDE_DIR/settings.json" ]; then
-    # Convert absolute CLAUDE_DIR back to tilde form for settings.json
-    claude_dir_tilde="${CLAUDE_DIR/#$HOME/\~}"
-    echo "  🔄 Rewriting paths in settings.json → $claude_dir_tilde/"
-    sed -i '' "s|~/.claude/|${claude_dir_tilde}/|g" "$CLAUDE_DIR/settings.json"
 fi
 
 # Deploy rules (auto-loaded by Claude Code)
