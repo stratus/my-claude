@@ -177,11 +177,12 @@ if [ -d "$SCRIPT_DIR/skills" ] && [ "$(ls -A "$SCRIPT_DIR/skills" 2>/dev/null)" 
                 echo "    📄 Copying skills/$skill_name"
                 cp -r "$skill_dir" "$CLAUDE_DIR/commands/$skill_name"
             else
-                # Compare each file within the skill directory
-                for skill_file in "$skill_dir"*; do
-                    if [ -f "$skill_file" ]; then
-                        copy_if_missing "$skill_file" "$CLAUDE_DIR/commands/$skill_name/$(basename "$skill_file")"
-                    fi
+                # Compare each file within the skill directory (recursively)
+                find "$skill_dir" -type f | while read -r skill_file; do
+                    rel="${skill_file#"$skill_dir"}"
+                    dest="$CLAUDE_DIR/commands/$skill_name/$rel"
+                    mkdir -p "$(dirname "$dest")"
+                    copy_if_missing "$skill_file" "$dest"
                 done
             fi
         fi

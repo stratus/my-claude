@@ -19,3 +19,6 @@ SQL injection, XSS, CSRF, insecure deserialization, XXE, SSRF, command injection
 
 ## Frontend Security
 CSP headers, sanitize HTML (DOMPurify), no innerHTML with user data, HTTPS only
+
+## OWASP Detailed Guidance
+Quantified security criteria in `~/.claude/commands/security-audit/references/` — loaded automatically by the `/security-audit` skill based on detected tech stack.
