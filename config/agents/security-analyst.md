@@ -1,7 +1,7 @@
 ---
 name: security-analyst
 description: Security analysis specialist. Use when performing security assessments, threat modeling, reviewing auth flows, analyzing infrastructure security, or writing security documentation.
-model: sonnet
+model: opus
 color: red
 tools: Read, Write, Edit, Glob, Grep, Bash
 maxTurns: 20

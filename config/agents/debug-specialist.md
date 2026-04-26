@@ -1,7 +1,7 @@
 ---
 name: debug-specialist
 description: Debugging specialist for errors, test failures, and unexpected behavior. Use proactively when encountering ANY technical problems. Mandatory for all errors, exceptions, and failures.
-model: sonnet
+model: opus
 color: green
 tools: Read, Glob, Grep, Bash
 maxTurns: 25

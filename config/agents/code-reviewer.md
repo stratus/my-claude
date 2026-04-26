@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: Expert code reviewer for security, quality, tests, and best practices. Use proactively after writing or modifying any code before committing. Mandatory for all code changes.
-model: sonnet
+model: opus
 color: blue
 tools: Read, Glob, Grep, Bash
 maxTurns: 20

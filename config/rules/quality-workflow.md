@@ -43,10 +43,10 @@ Most agents are dispatched automatically by `/audit` and `/polish`. If you need 
 
 | Situation | Agent | Model |
 |-----------|-------|-------|
-| Code changed | `code-reviewer` | sonnet |
-| Security files changed | `security-analyst` | sonnet |
+| Code changed | `code-reviewer` | opus |
+| Security files changed | `security-analyst` | opus |
 | Docs need updating | `docs-updater` | haiku |
-| Something is broken | `debug-specialist` | sonnet |
+| Something is broken | `debug-specialist` | opus |
 | Need integration/E2E tests | `integration-tester` | sonnet |
 | Verify CUJs still work | `cuj-verifier` | sonnet |
 | Cross-component changes | `architect-reviewer` | opus |

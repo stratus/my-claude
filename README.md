@@ -103,10 +103,10 @@ Markdown definitions in `config/agents/` deploy to `~/.claude/agents/`.
 
 | Agent | Model | Purpose |
 |-------|-------|---------|
-| `code-reviewer` | sonnet | Security, quality, tests, best practices — mandatory after >20 lines |
-| `security-analyst` | sonnet | Threat modeling, auth flow review, infrastructure security |
+| `code-reviewer` | opus | Security, quality, tests, best practices — mandatory after >20 lines |
+| `security-analyst` | opus | Threat modeling, auth flow review, infrastructure security |
 | `docs-updater` | haiku | Keeps user-facing documentation in sync with code |
-| `debug-specialist` | sonnet | Root-cause analysis for errors, test failures, unexpected behavior |
+| `debug-specialist` | opus | Root-cause analysis for errors, test failures, unexpected behavior |
 | `integration-tester` | sonnet | E2E tests, API contracts, cross-component flows |
 | `cuj-verifier` | sonnet | Walks documented Critical User Journeys to catch doc/code drift |
 | `architect-reviewer` | opus | Cross-component changes, new dependencies, AD compliance |
@@ -122,7 +122,7 @@ Each skill is a directory under `skills/` with a `SKILL.md`. Deployed to `~/.cla
 
 | Skill | Model | Purpose |
 |-------|-------|---------|
-| `/plan` | sonnet | Interview, design phased approach, produce implementation plan |
+| `/plan` | opus | Interview, design phased approach, produce implementation plan |
 | `/implement` | sonnet | Phased execution with quality gates after planning |
 | `/audit` | sonnet | Read-only health report (code, security, docs, CUJ/AD) |
 | `/polish` | opus | Fix audit findings, walk DoD, score 0-100, save learnings |

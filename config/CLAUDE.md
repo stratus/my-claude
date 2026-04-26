@@ -8,7 +8,7 @@ Detailed rules auto-load from `~/.claude/rules/`.
 ## Workflow After Code Changes
 
 For changes **>20 lines or touching security/validation**:
-1. Run `code-reviewer` agent (sonnet) — marks code review + tests + coverage done
+1. Run `code-reviewer` agent (opus) — marks code review + tests + coverage done
 2. If security-sensitive files changed: run `security-analyst` agent — marks security done
 3. Run `docs-updater` agent (haiku) → For user-facing changes — marks docs done
 4. Commit — the **pre-commit gate enforces all 5 gates**
@@ -57,9 +57,9 @@ Before implementing any feature, confirm:
 
 | Agent | When to Use | Model |
 |-------|-------------|-------|
-| `code-reviewer` | After code changes >20 lines or security-related | sonnet |
+| `code-reviewer` | After code changes >20 lines or security-related | opus |
 | `docs-updater` | After code review, for user-facing changes | haiku |
-| `debug-specialist` | Errors, test failures, unexpected behavior | sonnet |
+| `debug-specialist` | Errors, test failures, unexpected behavior | opus |
 | `integration-tester` | When unit tests aren't enough — E2E, API, cross-component tests | sonnet |
 | `cuj-verifier` | Verify documented CUJs actually work, catch doc/code drift | sonnet |
 | `architect-reviewer` | Cross-component changes, new deps, AD compliance | opus |
