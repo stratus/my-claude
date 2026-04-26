@@ -17,6 +17,7 @@ This repo is the source of truth for a Claude Code setup that emphasizes:
 - **macOS or Linux** — installer uses BSD `sed -i ''` on macOS; pre-commit gate handles both BSD and GNU `date`.
 - **bash 4+ recommended** (bash 3.2 on macOS works but lacks some features the inner skills assume)
 - **`jq`** — required by `block-dangerous-commands.sh`, `pre-commit-gate.sh`, `notify.sh`, `after-edit.sh`
+- **`python3`** — required by `block-secrets.py` (the Read/Edit/Write secrets blocker)
 - **`git`** — for the pre-commit gate's diff inspection
 - **`shasum`** — used by `install.sh` to detect drift on update (preinstalled on macOS; install via `coreutils` on Linux)
 - **Claude Code CLI** — install from <https://docs.claude.com/en/docs/claude-code>
@@ -24,7 +25,7 @@ This repo is the source of truth for a Claude Code setup that emphasizes:
 Quick sanity check before installing:
 
 ```bash
-command -v jq git shasum bash >/dev/null && echo "ok"
+command -v jq git shasum bash python3 >/dev/null && echo "ok"
 ```
 
 ## Installation
@@ -156,14 +157,15 @@ Every file in `config/rules/` deploys to `~/.claude/rules/` and is loaded into e
 
 ## Hooks
 
-Shell scripts in `hooks/` deploy to `~/.claude/hooks/` (made executable on install) and are wired into `config/settings.json`.
+Scripts in `hooks/` deploy to `~/.claude/hooks/` (made executable on install) and are wired into `config/settings.json`.
 
 | Hook | Trigger | Purpose |
 |------|---------|---------|
+| `block-secrets.py` | PreToolUse (Read/Edit/Write) | Blocks access to `.env`, `.pem`, `.key`, `secrets/`, `.ssh/`, and other sensitive files |
 | `block-dangerous-commands.sh` | PreToolUse (Bash) | Blocks `rm -rf /`, force-push to main, curl-piped-to-shell, chmod 777, dd-to-disk, etc. |
 | `pre-commit-gate.sh` | PreToolUse (Bash, `git commit`) | Enforces the 5 gates |
 | `after-edit.sh` | PostToolUse (Edit/Write) | Runs formatters/linters (gofmt, prettier, ruff, etc.) |
-| `end-of-turn.sh` | Stop | End-of-turn quality reminders |
+| `end-of-turn.sh` | Stop | Non-blocking quality reminders (lint, typecheck, format, secret-scan) |
 | `notify.sh` | Notification | macOS / Linux / WSL desktop notifications |
 | `mark-reviewed.sh` | Manual | Sets review markers (called by agents and as escape hatch) |
 

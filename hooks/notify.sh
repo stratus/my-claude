@@ -51,11 +51,14 @@ send_notification() {
     local title="Claude Code"
     local message="$1"
     
-    # macOS
+    # macOS — pass message/title as env vars and read via osascript's
+    # `system attribute` so the payload is treated as data, not shell code.
+    # Earlier versions interpolated $message into a double-quoted -e string,
+    # which let `$(...)`, backticks, and `$VAR` expand before osascript saw them.
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        # Escape quotes in message to prevent command injection
-        local safe_message="${message//\"/\\\"}"
-        osascript -e "display notification \"$safe_message\" with title \"$title\" sound name \"Glass\"" 2>/dev/null || true
+        MSG="$message" TITLE="$title" osascript \
+            -e 'display notification (system attribute "MSG") with title (system attribute "TITLE") sound name "Glass"' \
+            2>/dev/null || true
         return
     fi
     

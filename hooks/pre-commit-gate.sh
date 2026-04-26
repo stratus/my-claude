@@ -37,9 +37,19 @@ if ! echo "$COMMAND" | grep -qE '\bgit\s+commit\b'; then
     exit 0
 fi
 
-# Don't gate --allow-empty (initial commits, CI markers) or --amend (fixing existing commit)
-if echo "$COMMAND" | grep -qE '\-\-allow-empty|\-\-amend'; then
+# Don't gate --amend (rewriting an already-gated commit).
+if echo "$COMMAND" | grep -qE '\-\-amend'; then
     exit 0
+fi
+
+# --allow-empty only bypasses when the commit is genuinely empty.
+# A commit with `--allow-empty` AND staged changes still has real content to
+# review, so it should hit the gate like any other commit.
+if echo "$COMMAND" | grep -qE '\-\-allow-empty'; then
+    STAGED_LINES=$(git diff --cached --numstat 2>/dev/null | awk '{s+=$1+$2} END {print s+0}')
+    if [[ "$STAGED_LINES" -eq 0 ]]; then
+        exit 0
+    fi
 fi
 
 # Bail early if not inside a git repo
