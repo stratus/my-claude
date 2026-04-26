@@ -47,12 +47,15 @@ If the feature contradicts an accepted AD, flag it immediately:
 > "This plan would use [X], but AD [number] chose [Y] because [reason]. Should we create a new AD to supersede it?"
 
 ### 3. Design the Approach
-Break into **phases** with clear boundaries:
+Break into **phases** with clear boundaries. Inside each phase, write steps in **verify-loop format** (`step → verify: check`) so success is checkable, not aspirational. See `rules/karpathy-principles.md`.
 
 ```
 ## Phase 1: [Foundation]
 - What to build
 - Files to create/modify
+- Steps:
+  1. [step] → verify: [check]
+  2. [step] → verify: [check]
 - Tests to add
 - Acceptance criteria
 
@@ -62,6 +65,8 @@ Break into **phases** with clear boundaries:
 ## Phase 3: [Polish & Docs]
 ...
 ```
+
+Weak verify clauses ("make it work") are a smell — replace them with concrete checks (a passing test, a curl response, a screenshot, a log line).
 
 ### 4. Review Checklist
 For each phase, verify:

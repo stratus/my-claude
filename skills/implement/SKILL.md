@@ -54,6 +54,12 @@ For each phase:
 3. Run tests and linter
 4. Verify acceptance criteria (both explicit and CUJ-derived)
 
+While writing code, hold to two rules from `rules/karpathy-principles.md`:
+- **Every changed line traces to the request.** If a line in your diff doesn't map to the user story or acceptance criteria, revert it.
+- **Match existing style.** Don't "improve" adjacent code or refactor things that aren't broken — if you spot dead code or smells outside scope, mention them and move on.
+
+If the plan's phase steps weren't already in `step → verify: check` format, restate them that way before executing — it makes "phase done" objective instead of vibes.
+
 ### 3. Quality Gate
 After each phase, check:
 - [ ] Tests pass

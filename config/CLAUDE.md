@@ -43,6 +43,7 @@ Before implementing any feature, confirm:
 4. **User-Verifiable** - If you can't demo it, it's not done
 5. **Readable Code** - Self-documenting preferred
 6. **Track with Git** - Atomic commits, clear messages
+7. **Behavioral Discipline** - Surface assumptions, match existing style, every changed line traces to the request, plans use `step → verify: check`. See `rules/karpathy-principles.md`.
 
 ## Token Optimization
 
