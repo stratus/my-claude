@@ -42,6 +42,22 @@ if [[ -z "$COMMAND" ]]; then
 fi
 
 # -----------------------------------------------------------------------------
+# Carve-out: `git commit` doesn't itself execute any of the patterns this hook
+# scans — its body is just text being stored in a commit object. Scanning the
+# body produces false positives whenever a commit message describes a fix for
+# something dangerous (e.g., a message body mentioning curl-piped-to-shell).
+# Real curl-pipe-bash invocations OUTSIDE git commit are still scanned below.
+#
+# Trade-off: a deliberately constructed `git commit -m "$(curl … | bash)"`
+# would slip past, since the curl runs at command-substitution time. Accepted —
+# Claude doesn't autonomously generate that pattern and pre-commit-gate.sh
+# still runs as a separate review gate on every commit.
+# -----------------------------------------------------------------------------
+if echo "$COMMAND" | grep -qE '^[[:space:]]*(sudo[[:space:]]+)?git[[:space:]]+commit([[:space:]]|$)'; then
+    exit 0
+fi
+
+# -----------------------------------------------------------------------------
 # Dangerous Patterns
 # -----------------------------------------------------------------------------
 
@@ -75,16 +91,17 @@ if echo "$COMMAND" | grep -qE 'chmod\s+(777|a\+rwx)'; then
     exit 2
 fi
 
-# Piping curl directly to shell (dangerous pattern)
-if echo "$COMMAND" | grep -qE 'curl\s+.*\|\s*(ba)?sh'; then
+# Piping curl directly to shell (dangerous pattern).
+# \b anchors the (ba)?sh end so we don't false-match `shasum`, `shellcheck`, etc.
+if echo "$COMMAND" | grep -qE 'curl\s+.*\|\s*(ba)?sh\b'; then
     echo "⚠️ BLOCKED: Piping curl output directly to shell" >&2
     echo "Command: $COMMAND" >&2
     echo "Tip: Download script first, review it, then execute" >&2
     exit 2
 fi
 
-# wget piped to shell
-if echo "$COMMAND" | grep -qE 'wget\s+.*\|\s*(ba)?sh'; then
+# wget piped to shell (same word-boundary anchor as curl pattern).
+if echo "$COMMAND" | grep -qE 'wget\s+.*\|\s*(ba)?sh\b'; then
     echo "⚠️ BLOCKED: Piping wget output directly to shell" >&2
     echo "Command: $COMMAND" >&2
     exit 2
