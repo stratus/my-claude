@@ -58,12 +58,15 @@ Before implementing any feature, confirm:
 | Agent | When to Use | Model |
 |-------|-------------|-------|
 | `code-reviewer` | After code changes >20 lines or security-related | opus |
+| `security-analyst` | Security-sensitive files: auth, crypto, validation, infrastructure | opus |
 | `docs-updater` | After code review, for user-facing changes | haiku |
 | `debug-specialist` | Errors, test failures, unexpected behavior | opus |
 | `integration-tester` | When unit tests aren't enough — E2E, API, cross-component tests | sonnet |
 | `cuj-verifier` | Verify documented CUJs actually work, catch doc/code drift | sonnet |
 | `architect-reviewer` | Cross-component changes, new deps, AD compliance | opus |
 | `ux-reviewer` | Web projects: loading/empty/error states, a11y, responsive | sonnet |
+| `react-frontend` | React 19, Zustand, React Flow, Tailwind v4 | sonnet |
+| `python-backend` | FastAPI, async, Temporal, SQLAlchemy, Pydantic | sonnet |
 
 **Skip agents** for trivial changes (<20 lines, non-security, no user-facing impact).
 
