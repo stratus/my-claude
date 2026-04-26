@@ -140,7 +140,6 @@ Every file in `config/rules/` deploys to `~/.claude/rules/` and is loaded into e
 
 | Rule | Topic |
 |------|-------|
-| `architecture.md` | When to document architecture diagrams |
 | `code-readability.md` | Naming, function size, complexity limits |
 | `cujs-and-ads.md` | CUJ/ADR conventions, opt-out, staleness |
 | `definition-of-done.md` | Per-project-type DoD checklists |
