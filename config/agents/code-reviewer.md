@@ -76,12 +76,21 @@ git diff --staged
 
 ### 3. Test Coverage Review (MANDATORY)
 
-**Verify:**
+**Verify — Coverage:**
 - [ ] Tests exist for all new functions/methods
 - [ ] Edge cases covered (null, empty, boundaries)
 - [ ] Error conditions tested
 - [ ] Coverage ≥ 80% (check with language-specific tools)
 - [ ] Tests are isolated, deterministic, fast
+
+**Verify — Test Quality:**
+- [ ] Test names describe *behavior* (`should_reject_expired_token`), not implementation (`test_check_token`)
+- [ ] Every test has at least one meaningful assertion — flag assertion-free tests (they always pass, always lie)
+- [ ] Tests assert on observable outcomes (return values, state, side effects) — not internal details or mock call counts
+- [ ] Each test covers one behavior — a test asserting 10 things catches nothing specifically when it fails
+- [ ] No shared mutable state between tests (ordering dependency = latent flakiness)
+- [ ] No hardcoded `Date.now()` / `datetime.now()` without time mocking — flag as time bomb
+- [ ] Mocks limited to third-party external services (payment APIs, email providers) and network layers in component tests — business logic and DBs use real implementations or in-memory fakes
 
 **Run coverage check:**
 ```bash
