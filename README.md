@@ -1,17 +1,31 @@
 # my-claude
 
-Personal Claude Code configuration repository.
+Personal Claude Code configuration repository. Deploys global standards, agents, skills, hooks, and rules to `~/.claude/`.
 
 ## Overview
 
-This repository contains my Claude Code configuration, including:
+This repo is the source of truth for a Claude Code setup that emphasizes:
 
-- **CLAUDE.md** - Global development standards and instructions
-- **agents/** - Custom agent definitions (code-reviewer, debug-specialist, docs-updater)
-- **hooks/** - Enforcement scripts for security and quality
-- **skills/** - Reusable automation commands
-- **docs/** - Setup guides (MCP servers, etc.)
-- **templates/** - Project-specific CLAUDE.md templates (Next.js, React Native, Go)
+- **Quality ratchets** — pre-commit gate with 5 blocking checks (review, security, tests, coverage, docs)
+- **Specialized agents** — 10 sub-agents for code review, security, debugging, integration testing, architecture, UX, and more
+- **Workflow skills** — `/plan` → `/implement` → `/polish` covers most of a feature lifecycle
+- **Auto-loaded rules** — modular guidance under `~/.claude/rules/` instead of one monolithic CLAUDE.md
+- **Reusable templates** — Next.js, React Native, Go CLI, plus CUJ/ADR/MCP scaffolds
+
+## Prerequisites
+
+- **macOS or Linux** — installer uses BSD `sed -i ''` on macOS; pre-commit gate handles both BSD and GNU `date`.
+- **bash 4+ recommended** (bash 3.2 on macOS works but lacks some features the inner skills assume)
+- **`jq`** — required by `block-dangerous-commands.sh`, `pre-commit-gate.sh`, `notify.sh`, `after-edit.sh`
+- **`git`** — for the pre-commit gate's diff inspection
+- **`shasum`** — used by `install.sh` to detect drift on update (preinstalled on macOS; install via `coreutils` on Linux)
+- **Claude Code CLI** — install from <https://docs.claude.com/en/docs/claude-code>
+
+Quick sanity check before installing:
+
+```bash
+command -v jq git shasum bash >/dev/null && echo "ok"
+```
 
 ## Installation
 
@@ -21,127 +35,162 @@ cd ~/my-claude
 make install
 ```
 
-## Structure
+`make install` deploys to `~/.claude/`. On a content mismatch with an existing file, the installer shows a diff and asks before overwriting. Use `FORCE_UPDATE=1 make install` to skip prompts.
+
+To deploy the same config to a secondary Claude instance (e.g., a corp-managed install):
+
+```bash
+make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
+```
+
+To remove a deployed config (creates a backup first):
+
+```bash
+make clean
+```
+
+## Repository Structure
 
 ```
 my-claude/
-├── config/                 # Deploys to ~/.claude/ (global, all projects)
-│   ├── CLAUDE.md           # Development standards
-│   ├── PERMISSIONS-GUIDE.md # Security & permissions
-│   ├── settings.json       # Claude Code settings
-│   └── agents/             # Custom agents
-│       ├── code-reviewer.md
-│       ├── debug-specialist.md
-│       └── docs-updater.md
-├── .claude/                # Project-local overrides (this repo only)
-│   └── CLAUDE.md           # Guidelines for editing my-claude itself
-├── hooks/                  # Enforcement hooks
-├── skills/                 # Slash commands
-├── docs/                   # Reference documentation
-├── templates/              # Project-specific templates
-│   ├── nextjs/             # Next.js web apps
-│   ├── react-native/       # Mobile apps
-│   └── go-cli/             # Go CLI/services
-├── install.sh              # Installation script
-├── Makefile                # Build orchestration
+├── config/                       # Source of truth — deploys to ~/.claude/
+│   ├── CLAUDE.md                 # Global standards (concise, points at rules/)
+│   ├── PERMISSIONS-GUIDE.md      # Permissions and sandbox notes
+│   ├── settings.json             # Hooks, permissions, sandbox config
+│   ├── rules/*.md                # Auto-loaded rule files
+│   ├── agents/*.md               # 10 sub-agent definitions
+│   └── statusline/               # Statusline wrapper + Config.toml
+├── skills/<name>/SKILL.md        # 11 slash-command skills → ~/.claude/commands/
+├── hooks/*.sh                    # Event hooks → ~/.claude/hooks/ (chmod +x)
+├── docs/                         # Reference docs (GUIDE.md, mcp-setup.md)
+├── templates/                    # Project scaffolds + doc templates
+│   ├── nextjs/.claude/CLAUDE.md
+│   ├── react-native/.claude/CLAUDE.md
+│   ├── go-cli/.claude/CLAUDE.md
+│   ├── cuj-template.md
+│   ├── ad-template.md
+│   └── mcp.json.example
+├── .claude/CLAUDE.md             # Project-local rules for editing this repo
+├── install.sh                    # Checksum-aware deployer
+├── Makefile                      # install / clean / help
 └── README.md
 ```
 
-**`config/` vs `.claude/`**: `config/` contains source files that `make install` deploys globally to `~/.claude/`. `.claude/` contains project-specific instructions that Claude reads only when working in this repo (e.g., deployment conventions, security reminders for this public repo).
+`config/` is what deploys. `.claude/` is local — only Claude reads it when working **in this repo** (e.g., to enforce "this repo is public, never commit secrets").
 
-## Configuration Files
+## Workflow
 
-### CLAUDE.md
+```
+/plan → /implement → /polish
+```
 
-Global development standards applied to all projects:
-- Security-first approach
-- 80% minimum test coverage
-- Documentation requirements
-- Code readability standards
-- Git workflow guidelines
+That's the whole user-facing workflow. Everything else (running agents, setting review markers, capturing learnings) is automatic.
 
-### Agents
+The **pre-commit gate** runs on every `git commit` and blocks until 5 conditions are met:
 
-Custom agents for specialized tasks:
+1. Code review for >20 lines changed
+2. Security review for sensitive files (auth, crypto, validation, etc.)
+3. Tests pass
+4. Coverage ≥ 80%
+5. Docs review for user-facing changes
 
-| Agent | Purpose |
-|-------|---------|
-| `code-reviewer` | Reviews code for security, quality, and best practices |
-| `debug-specialist` | Diagnoses errors and provides fixes |
-| `docs-updater` | Keeps documentation current |
+Markers expire after 10 minutes. Escape hatch: `~/.claude/hooks/mark-reviewed.sh --all`.
 
-### Hooks
+## Agents
 
-Enforcement scripts that run deterministically:
+Markdown definitions in `config/agents/` deploy to `~/.claude/agents/`.
+
+| Agent | Model | Purpose |
+|-------|-------|---------|
+| `code-reviewer` | sonnet | Security, quality, tests, best practices — mandatory after >20 lines |
+| `security-analyst` | sonnet | Threat modeling, auth flow review, infrastructure security |
+| `docs-updater` | haiku | Keeps user-facing documentation in sync with code |
+| `debug-specialist` | sonnet | Root-cause analysis for errors, test failures, unexpected behavior |
+| `integration-tester` | sonnet | E2E tests, API contracts, cross-component flows |
+| `cuj-verifier` | sonnet | Walks documented Critical User Journeys to catch doc/code drift |
+| `architect-reviewer` | opus | Cross-component changes, new dependencies, AD compliance |
+| `ux-reviewer` | sonnet | Loading/empty/error states, a11y, responsive design |
+| `react-frontend` | sonnet | React 19, Zustand, React Flow, Tailwind v4 |
+| `python-backend` | sonnet | FastAPI, async, Temporal, SQLAlchemy, Pydantic |
+
+Most agents dispatch automatically from `/audit` and `/polish`.
+
+## Skills (Slash Commands)
+
+Each skill is a directory under `skills/` with a `SKILL.md`. Deployed to `~/.claude/commands/<name>/`.
+
+| Skill | Model | Purpose |
+|-------|-------|---------|
+| `/plan` | sonnet | Interview, design phased approach, produce implementation plan |
+| `/implement` | sonnet | Phased execution with quality gates after planning |
+| `/audit` | sonnet | Read-only health report (code, security, docs, CUJ/AD) |
+| `/polish` | opus | Fix audit findings, walk DoD, score 0-100, save learnings |
+| `/learnings` | haiku | Capture what went well/wrong after a feature or hard fix |
+| `/security-audit` | sonnet | Vulnerability scan with OWASP reference material |
+| `/commit-messages` | haiku | Generate conventional commit messages from staged diff |
+| `/pr` | haiku | Create PR with title, description, test plan, linked issues |
+| `/cuj` | haiku | Scaffold a new Critical User Journey document |
+| `/ad` | haiku | Scaffold a new Architecture Decision Record |
+| `/remember` | haiku | Save learnings/patterns to persistent memory |
+
+## Rules (Auto-Loaded)
+
+Every file in `config/rules/` deploys to `~/.claude/rules/` and is loaded into every session. Split out from CLAUDE.md to keep the system prompt small while still authoritative on specific topics.
+
+| Rule | Topic |
+|------|-------|
+| `architecture.md` | When to document architecture diagrams |
+| `code-readability.md` | Naming, function size, complexity limits |
+| `cujs-and-ads.md` | CUJ/ADR conventions, opt-out, staleness |
+| `definition-of-done.md` | Per-project-type DoD checklists |
+| `documentation.md` | README requirements, the "litmus test" |
+| `ecosystem-tools.md` | When to suggest TDD Guard, Trail of Bits, claude-rules-doctor |
+| `git.md` | Commit/branch/PR conventions |
+| `karpathy-principles.md` | Surface assumptions, surgical edits, verify-loop format |
+| `languages.md` | Per-language linter/test commands |
+| `mcp-playwright.md` | Auto-suggest Playwright MCP for web projects |
+| `quality-workflow.md` | Mental model: `/plan` → `/implement` → `/polish` |
+| `remote-and-voice.md` | `/rc` and `/voice` features |
+| `security.md` | OWASP Top 10, secret hygiene, frontend security |
+| `testing.md` | 80% coverage minimum, env splitting, smoke tests |
+
+## Hooks
+
+Shell scripts in `hooks/` deploy to `~/.claude/hooks/` (made executable on install) and are wired into `config/settings.json`.
 
 | Hook | Trigger | Purpose |
 |------|---------|---------|
-| `block-secrets.py` | PreToolUse | Prevents access to .env files |
-| `block-dangerous-commands.sh` | PreToolUse | Blocks destructive operations |
-| `after-edit.sh` | PostToolUse | Runs formatters after edits |
-| `end-of-turn.sh` | Stop | Quality gates and validation |
-| `notify.sh` | Notification | Desktop notifications |
+| `block-dangerous-commands.sh` | PreToolUse (Bash) | Blocks `rm -rf /`, force-push to main, curl-piped-to-shell, chmod 777, dd-to-disk, etc. |
+| `pre-commit-gate.sh` | PreToolUse (Bash, `git commit`) | Enforces the 5 gates |
+| `after-edit.sh` | PostToolUse (Edit/Write) | Runs formatters/linters (gofmt, prettier, ruff, etc.) |
+| `end-of-turn.sh` | Stop | End-of-turn quality reminders |
+| `notify.sh` | Notification | macOS / Linux / WSL desktop notifications |
+| `mark-reviewed.sh` | Manual | Sets review markers (called by agents and as escape hatch) |
 
-### Skills
+## Templates
 
-Reusable automation via slash commands:
+Stack scaffolds and documentation templates under `templates/`.
 
-| Skill | Usage | Purpose |
-|-------|-------|---------|
-| `commit-messages` | `/commit-messages` | Generate conventional commits |
-| `remember` | `/remember` | Save learnings to persistent memory |
-| `security-audit` | `/security-audit` | Run vulnerability scans |
-
-### MCP Servers
-
-External tool integrations configured globally. See [docs/mcp-setup.md](docs/mcp-setup.md).
-
-| Server | Purpose |
-|--------|---------|
-| `github` | Issue/PR management, repo access |
-| `context7` | Current documentation lookup |
-
-### Project Templates
-
-Copy to new projects for domain-specific rules. See [templates/README.md](templates/README.md).
+| Template | Use For |
+|----------|---------|
+| `nextjs/.claude/` | Next.js 15+ App Router, Tailwind, shadcn/ui |
+| `react-native/.claude/` | React Native / Expo, expo-router |
+| `go-cli/.claude/` | Go CLI tools and services |
+| `cuj-template.md` | Critical User Journey scaffold (use via `/cuj`) |
+| `ad-template.md` | Architecture Decision Record scaffold (use via `/ad`) |
+| `mcp.json.example` | Recommended MCP server set for new projects |
 
 ```bash
 cp -r ~/my-claude/templates/nextjs/.claude ~/your-project/
 ```
 
-| Template | Stack |
-|----------|-------|
-| `nextjs/` | Next.js 15+, App Router, Tailwind, shadcn/ui |
-| `react-native/` | Expo, React Native, expo-router |
-| `go-cli/` | Go CLI tools and services |
+## MCP Servers
 
-## Deployment
+External integrations are configured per-machine — not deployed by this repo. See [docs/mcp-setup.md](docs/mcp-setup.md) for the recommended set (`github`, `context7`).
 
-Configuration deploys to `~/.claude/`:
-
-```
-~/.claude/
-├── CLAUDE.md
-├── PERMISSIONS-GUIDE.md
-├── settings.json
-├── agents/
-├── hooks/
-├── commands/    # Skills deploy here
-├── config/
-└── plans/
-```
-
-## Usage
-
-After installation, start Claude Code:
-
-```bash
-claude
-```
+A starter `.mcp.json` for new projects lives in `templates/mcp.json.example`.
 
 ## Updating
-
-Pull latest changes and reinstall:
 
 ```bash
 cd ~/my-claude
@@ -149,6 +198,21 @@ git pull
 make install
 ```
 
+The installer compares each file by SHA-256 and prompts before overwriting local divergence. Use `FORCE_UPDATE=1` to overwrite all without prompts.
+
+## Modifying This Repo
+
+See [.claude/CLAUDE.md](.claude/CLAUDE.md) for the project-local rules — most importantly: this repo is **public on GitHub**, so never commit secrets, personal project details, or anything from `~/.claude/projects/` (auto-memory).
+
+After editing config:
+
+```bash
+make install                # deploy
+# Start a new claude session to pick up changes
+```
+
 ## Related
 
-- [claude-code-mastery](https://github.com/TheDecipherist/claude-code-mastery) - Community resources
+- [docs/GUIDE.md](docs/GUIDE.md) — Long-form reference: global CLAUDE.md, MCP, commands, skills, hooks
+- [docs/mcp-setup.md](docs/mcp-setup.md) — Recommended MCP servers and install commands
+- [config/PERMISSIONS-GUIDE.md](config/PERMISSIONS-GUIDE.md) — Sandbox, permissions, allow/deny semantics

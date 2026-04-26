@@ -9,3 +9,10 @@
 # Local configuration
 *.local
 *.local.md
+**/*.local.md
+
+# Defense-in-depth: never commit auto-memory or per-project Claude state
+# even if a developer accidentally creates these inside the repo tree.
+projects/
+memory/
+review-markers/

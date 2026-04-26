@@ -90,6 +90,21 @@ USER_FACING=$(echo "$CHANGED_FILES" | grep -iE "$USER_FACING_PATTERNS" || true)
 DOC_CHANGES=$(echo "$CHANGED_FILES" | grep -iE "$DOC_PATTERNS" || true)
 
 # ---------------------------------------------------------------------------
+# Helper: parse YYYY-MM-DD into an epoch (portable across macOS BSD and Linux GNU).
+# Echoes 0 on parse failure so the caller treats it as "ancient" only when the
+# date string is genuinely malformed — we never want to silently treat every
+# CUJ/AD as fresh just because `date -j` doesn't exist.
+# ---------------------------------------------------------------------------
+
+parse_date_to_epoch() {
+    local date_str="$1"
+    if date -j -f "%Y-%m-%d" "$date_str" "+%s" 2>/dev/null; then
+        return
+    fi
+    date -d "$date_str" "+%s" 2>/dev/null || echo "0"
+}
+
+# ---------------------------------------------------------------------------
 # Helper: check if a marker is fresh (exists and < TTL seconds old)
 # NOTE: Only works with plain-timestamp markers. Do NOT use for coverage-checked
 # (which has format TIMESTAMP:PERCENTAGE). Coverage is parsed inline in Gate 4.
@@ -203,7 +218,7 @@ if [[ -d "docs/cujs" && ! -f "docs/cujs/.opted-out" ]]; then
         # Extract last-verified date from frontmatter
         verified_date=$(sed -n '/^---$/,/^---$/{ s/^last-verified:[[:space:]]*//p; }' "$cuj_file" | head -1)
         if [[ -n "$verified_date" && "$verified_date" != "YYYY-MM-DD" ]]; then
-            verified_epoch=$(date -j -f "%Y-%m-%d" "$verified_date" "+%s" 2>/dev/null || echo "0")
+            verified_epoch=$(parse_date_to_epoch "$verified_date")
             age=$((CURRENT_EPOCH - verified_epoch))
             if [[ $age -gt $STALENESS_THRESHOLD ]]; then
                 cuj_name=$(basename "$cuj_file")
@@ -216,10 +231,14 @@ if [[ -d "docs/cujs" && ! -f "docs/cujs/.opted-out" ]]; then
     # Check if changed files are mentioned in CUJ content
     # If the CUJ is stale AND code touches it → BLOCKING
     # If the CUJ is fresh AND code touches it → WARNING
+    # Use grep -w with a min-length filter to avoid false positives on common
+    # short tokens (e.g., a file named install.sh matching the word "install"
+    # in unrelated CUJ prose).
     while IFS= read -r changed; do
         [[ -n "$changed" ]] || continue
         module=$(basename "$changed" | sed 's/\.[^.]*$//')
-        match=$(grep -rl "$module" docs/cujs/*.md 2>/dev/null | head -1 || true)
+        [[ ${#module} -lt 4 ]] && continue
+        match=$(grep -rwl "$module" docs/cujs/*.md 2>/dev/null | head -1 || true)
         if [[ -n "$match" ]]; then
             cuj_name=$(basename "$match")
             # Check if this CUJ is in the stale list (pipe-delimited: filepath|date)
@@ -241,7 +260,7 @@ if [[ -d "docs/decisions" && ! -f "docs/decisions/.opted-out" ]]; then
         [[ -f "$ad_file" ]] || continue
         ad_date=$(sed -n '/^---$/,/^---$/{ s/^date:[[:space:]]*//p; }' "$ad_file" | head -1)
         if [[ -n "$ad_date" && "$ad_date" != "YYYY-MM-DD" ]]; then
-            ad_epoch=$(date -j -f "%Y-%m-%d" "$ad_date" "+%s" 2>/dev/null || echo "0")
+            ad_epoch=$(parse_date_to_epoch "$ad_date")
             age=$((CURRENT_EPOCH - ad_epoch))
             if [[ $age -gt $STALENESS_THRESHOLD ]]; then
                 ad_name=$(basename "$ad_file")
@@ -251,11 +270,12 @@ if [[ -d "docs/decisions" && ! -f "docs/decisions/.opted-out" ]]; then
         fi
     done
 
-    # Check if changed files are mentioned in AD content
+    # Check if changed files are mentioned in AD content (same anchoring as CUJ pass)
     while IFS= read -r changed; do
         [[ -n "$changed" ]] || continue
         module=$(basename "$changed" | sed 's/\.[^.]*$//')
-        match=$(grep -rl "$module" docs/decisions/*.md 2>/dev/null | head -1 || true)
+        [[ ${#module} -lt 4 ]] && continue
+        match=$(grep -rwl "$module" docs/decisions/*.md 2>/dev/null | head -1 || true)
         if [[ -n "$match" ]]; then
             ad_name=$(basename "$match")
             stale_entry=$(printf "%b" "$STALE_AD_FILES" | grep "^${match}|" || true)
