@@ -44,6 +44,7 @@ Before implementing any feature, confirm:
 5. **Readable Code** - Self-documenting preferred
 6. **Track with Git** - Atomic commits, clear messages
 7. **Behavioral Discipline** - Surface assumptions, match existing style, every changed line traces to the request, plans use `step → verify: check`. See `rules/karpathy-principles.md`.
+8. **Design First** - Write Goldfish-proof design docs before code. Run `/egm` to verify. See `rules/design-first.md`.
 
 ## Token Optimization
 
@@ -73,6 +74,7 @@ Before implementing any feature, confirm:
 Most agents are dispatched automatically by `/audit` and `/polish` — you rarely need to invoke them directly.
 
 **Simple workflow**: `/plan` → `/implement` → `/polish`. Everything else is automatic.
+(`/plan` recommends `/egm` to Goldfish-test the design doc before `/implement` begins.)
 
 ## Memory & Learning
 

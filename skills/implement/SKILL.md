@@ -1,7 +1,7 @@
 ---
 name: implement
 description: Start implementing a feature with user story validation, phased execution, and quality gates. Use after planning is complete.
-model: sonnet
+model: opus
 argument-hint: "[feature description or phase number]"
 ---
 

@@ -61,7 +61,7 @@ my-claude/
 │   ├── rules/*.md                # Auto-loaded rule files
 │   ├── agents/*.md               # 10 sub-agent definitions
 │   └── statusline/               # Statusline wrapper + Config.toml
-├── skills/<name>/SKILL.md        # 11 slash-command skills → ~/.claude/commands/
+├── skills/<name>/SKILL.md        # 12 slash-command skills → ~/.claude/commands/
 ├── hooks/*.sh                    # Event hooks → ~/.claude/hooks/ (chmod +x)
 ├── docs/                         # Reference docs (GUIDE.md, mcp-setup.md)
 ├── templates/                    # Project scaffolds + doc templates
@@ -123,7 +123,8 @@ Each skill is a directory under `skills/` with a `SKILL.md`. Deployed to `~/.cla
 | Skill | Model | Purpose |
 |-------|-------|---------|
 | `/plan` | opus | Interview, design phased approach, produce implementation plan |
-| `/implement` | sonnet | Phased execution with quality gates after planning |
+| `/egm` | opus | Goldfish Protocol — verify design doc completeness before implementing |
+| `/implement` | opus | Phased execution with quality gates after planning |
 | `/audit` | sonnet | Read-only health report (code, security, docs, CUJ/AD) |
 | `/polish` | opus | Fix audit findings, walk DoD, score 0-100, save learnings |
 | `/learnings` | haiku | Capture what went well/wrong after a feature or hard fix |
@@ -146,6 +147,7 @@ Every file in `config/rules/` deploys to `~/.claude/rules/` and is loaded into e
 | `documentation.md` | README requirements, the "litmus test" |
 | `ecosystem-tools.md` | When to suggest TDD Guard, Trail of Bits, claude-rules-doctor |
 | `git.md` | Commit/branch/PR conventions |
+| `design-first.md` | Elephant-Goldfish Model, Goldfish-proof docs, session recovery |
 | `karpathy-principles.md` | Surface assumptions, surgical edits, verify-loop format |
 | `languages.md` | Per-language linter/test commands |
 | `mcp-playwright.md` | Auto-suggest Playwright MCP for web projects |

@@ -42,7 +42,7 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 
 ## Conventions
 
-### Skills (11 total)
+### Skills (12 total)
 - One directory per skill under `skills/`
 - Must have `SKILL.md` with YAML frontmatter (`name`, `description`, `model`)
 - All skills must have explicit `model:` (haiku for mechanical, sonnet for reasoning, opus for quality ceiling)

@@ -25,6 +25,20 @@ If the task description is vague, interview the user using questions:
 - What does "done" look like?
 - Are there constraints (performance, compatibility, deadlines)?
 
+### 1b. Interrogation Phase
+
+Before researching the codebase, interrogate the problem as an adversarial peer reviewer.
+This is the "Victory Loves Preparation" step from Dave Rensin's Elephant-Goldfish Model:
+
+- What could go wrong with the obvious approach?
+- What assumptions are embedded in the problem statement?
+- What alternatives exist, and why might they be better?
+- What would a skeptical colleague say about this plan?
+
+The goal is to surface blind spots *before* committing to an approach. Do not let AI
+agreement substitute for clarity. Push back on convenient answers. If the request is
+genuinely unambiguous and the approach clear, this step is brief — but always ask once.
+
 ### 2. Research the Codebase
 - Explore relevant files and dependencies
 - Identify existing patterns to follow
@@ -77,6 +91,28 @@ For each phase, verify:
 - [ ] Documentation updates identified
 - [ ] CUJ impacts assessed (new CUJ needed? existing CUJ to update?)
 - [ ] Can be demoed/verified independently
+
+### 5. Session Recovery Block
+
+Every plan must end with a **Session Recovery** block so a fresh session can resume without
+reconstructing intent from conversation history:
+
+```
+## Session Recovery
+- Design doc / plan file: [path]
+- Key decisions: [2-3 bullets]
+- Rejected alternatives: [brief list]
+- Resume by: running /implement with this doc
+```
+
+### 6. Goldfish Test
+
+After writing the plan, instruct the user to run `/egm` to verify the document is
+Goldfish-proof — that a blank-slate session reading only this doc could reconstruct and
+execute the plan. `/egm` is a separate skill the user runs; this step does not invoke it.
+
+Do not start `/implement` until the user confirms `/egm` passed, or explicitly waives
+the check for a simple task.
 
 ## Output
 
