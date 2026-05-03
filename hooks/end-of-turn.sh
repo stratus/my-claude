@@ -1,27 +1,29 @@
 #!/usr/bin/env bash
 # =============================================================================
-# End-of-Turn Quality Gate Hook
+# End-of-Turn Quality Gate Hook  ——  PARKED, NOT WIRED UP
 # =============================================================================
 #
-# This hook runs when Claude finishes responding (Stop event).
-# It performs quality checks to catch issues before they accumulate.
+# Status: This script is intentionally NOT registered as a Stop hook in
+# config/settings.json. Commit 916a30e ("Cut per-turn hook and statusline
+# latency") unwired it because re-running tsc / cargo check / clippy / ruff
+# with 30s timeouts after every assistant turn was the dominant contributor
+# to "writes feel slow." The same checks already gate at commit time via
+# pretooluse-bash.sh (Phase B), so the post-turn fan-out was redundant.
 #
-# Usage:
-#   Add to ~/.claude/settings.json or .claude/settings.json:
-#   {
-#     "hooks": {
-#       "Stop": [
-#         {
-#           "matcher": "*",
-#           "hooks": [
-#             {
-#               "type": "command",
-#               "command": "~/.claude/hooks/end-of-turn.sh"
-#             }
-#           ]
-#         }
-#       ]
-#     }
+# Kept on disk for easy re-enable. To turn it back on, add to
+# config/settings.json:
+#   "hooks": {
+#     "Stop": [
+#       {
+#         "matcher": "*",
+#         "hooks": [
+#           {
+#             "type": "command",
+#             "command": "~/.claude/hooks/end-of-turn.sh"
+#           }
+#         ]
+#       }
+#     ]
 #   }
 #
 # Exit codes:
