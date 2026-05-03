@@ -9,14 +9,14 @@ display.line1.components = ["repo_info", "model_info", "context_window", "time_d
 display.line1.separator = " | "
 display.line1.show_when_empty = true
 
-display.line2.components = ["commits", "mcp_status", "version_info"]
+display.line2.components = ["commits"]
 display.line2.separator = " | "
 display.line2.show_when_empty = true
 
 # Feature toggles
 features.show_commits = true
-features.show_version = true
-features.show_mcp_status = true
+features.show_version = false
+features.show_mcp_status = false
 features.show_cost_tracking = false
 features.show_reset_info = false
 features.show_prayer_times = false

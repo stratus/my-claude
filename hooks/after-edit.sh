@@ -46,46 +46,29 @@ EXTENSION="${FILE_PATH##*.}"
 # Format based on file type
 # -----------------------------------------------------------------------------
 
-case "$EXTENSION" in
-    js|jsx|ts|tsx|json|md|yaml|yml|css|scss|html)
-        # Prettier for web files
-        if command -v prettier &>/dev/null; then
-            prettier --write "$FILE_PATH" 2>/dev/null || true
-        fi
-        ;;
-    
-    py)
-        # Black for Python
-        if command -v black &>/dev/null; then
-            black --quiet "$FILE_PATH" 2>/dev/null || true
-        fi
-        # Ruff for linting
-        if command -v ruff &>/dev/null; then
-            ruff check --fix --silent "$FILE_PATH" 2>/dev/null || true
-        fi
-        ;;
-    
-    go)
-        # gofmt for Go
-        if command -v gofmt &>/dev/null; then
-            gofmt -w "$FILE_PATH" 2>/dev/null || true
-        fi
-        ;;
-    
-    rs)
-        # rustfmt for Rust
-        if command -v rustfmt &>/dev/null; then
-            rustfmt "$FILE_PATH" 2>/dev/null || true
-        fi
-        ;;
-    
-    sh|bash)
-        # shfmt for shell scripts
-        if command -v shfmt &>/dev/null; then
-            shfmt -w "$FILE_PATH" 2>/dev/null || true
-        fi
-        ;;
-esac
+# Run formatters in background so PostToolUse returns immediately and the
+# agent loop is not blocked. Format-on-save is a "nice to have"; the commit
+# gate enforces formatting at commit time anyway.
+(
+    case "$EXTENSION" in
+        js|jsx|ts|tsx|json|md|yaml|yml|css|scss|html)
+            command -v prettier &>/dev/null && prettier --write "$FILE_PATH" 2>/dev/null || true
+            ;;
+        py)
+            command -v black &>/dev/null && black --quiet "$FILE_PATH" 2>/dev/null || true
+            command -v ruff  &>/dev/null && ruff check --fix --silent "$FILE_PATH" 2>/dev/null || true
+            ;;
+        go)
+            command -v gofmt &>/dev/null && gofmt -w "$FILE_PATH" 2>/dev/null || true
+            ;;
+        rs)
+            command -v rustfmt &>/dev/null && rustfmt "$FILE_PATH" 2>/dev/null || true
+            ;;
+        sh|bash)
+            command -v shfmt &>/dev/null && shfmt -w "$FILE_PATH" 2>/dev/null || true
+            ;;
+    esac
+) </dev/null >/dev/null 2>&1 &
+disown $! 2>/dev/null || true
 
-# Always exit 0 - formatting failures shouldn't block work
 exit 0

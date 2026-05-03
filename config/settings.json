@@ -24,7 +24,7 @@
         ]
       },
       {
-        "matcher": "Read|Edit|Write",
+        "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
@@ -51,17 +51,6 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/notify.sh"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/end-of-turn.sh"
           }
         ]
       }
