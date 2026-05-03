@@ -5,6 +5,8 @@ model: opus
 argument-hint: "[project-type: web|cli|infra]"
 ---
 
+<!-- ultrathink: keyword trigger required because alwaysThinkingEnabled=false in settings.json -->
+
 # Polish Skill
 
 The opposite of `/plan`. Instead of "what should we build?", this asks "is this actually done?" Takes a working project and brings it to v1 quality.

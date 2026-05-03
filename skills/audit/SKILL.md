@@ -5,6 +5,8 @@ model: sonnet
 argument-hint: "[focus-area]"
 ---
 
+<!-- ultrathink: keyword trigger required because alwaysThinkingEnabled=false in settings.json -->
+
 # Project Audit Skill
 
 Run all quality agents in read-only mode against the current project. Produces a consolidated report covering code quality, security, documentation, CUJ/AD coverage, architecture, and (for web projects) UX quality.

@@ -5,6 +5,8 @@ model: opus
 argument-hint: "[feature description or phase number]"
 ---
 
+<!-- ultrathink: keyword trigger required because alwaysThinkingEnabled=false in settings.json -->
+
 # Implementation Skill
 
 Execute a planned feature with quality gates at each step.

@@ -5,6 +5,8 @@ model: opus
 argument-hint: "[feature or task description]"
 ---
 
+<!-- ultrathink: keyword trigger required because alwaysThinkingEnabled=false in settings.json -->
+
 # Planning Skill
 
 Create a structured implementation plan before writing any code.
