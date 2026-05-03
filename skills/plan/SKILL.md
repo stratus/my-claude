@@ -20,6 +20,8 @@ Create a structured implementation plan before writing any code.
 
 ## Process
 
+> **Ask via dialog:** When this skill needs a decision, preference, or clarification, call `AskUserQuestion` (`ToolSearch select:AskUserQuestion` if the schema isn't loaded). Don't embed questions in prose. See `~/.claude/CLAUDE.md` § "Asking the User Questions" for the full rule.
+
 ### 1. Understand the Goal
 If the task description is vague, interview the user using questions:
 - What problem does this solve?

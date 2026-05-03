@@ -19,6 +19,8 @@ Execute a planned feature with quality gates at each step.
 
 ## Process
 
+> **Ask via dialog:** When this skill needs a decision, preference, or clarification, call `AskUserQuestion` (`ToolSearch select:AskUserQuestion` if the schema isn't loaded). Don't embed questions in prose. See `~/.claude/CLAUDE.md` § "Asking the User Questions" for the full rule.
+
 ### 1. Pre-flight Check
 Before writing code, verify:
 - [ ] User story exists: "As a [user type], I can [action] so that [outcome]"

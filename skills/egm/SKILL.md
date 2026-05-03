@@ -23,6 +23,8 @@ This skill runs that check before implementation begins.
 
 ## Process
 
+> **Ask via dialog:** When this skill needs a decision, preference, or clarification, call `AskUserQuestion` (`ToolSearch select:AskUserQuestion` if the schema isn't loaded). Don't embed questions in prose. See `~/.claude/CLAUDE.md` § "Asking the User Questions" for the full rule.
+
 ### Step 1 — Locate the Design Doc
 
 If an argument was passed, use it. Otherwise look for:

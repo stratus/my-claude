@@ -18,6 +18,8 @@ Save information to persistent auto memory so it's available in future sessions.
 
 ## Process
 
+> **Ask via dialog:** When this skill needs a decision, preference, or clarification, call `AskUserQuestion` (`ToolSearch select:AskUserQuestion` if the schema isn't loaded). Don't embed questions in prose. See `~/.claude/CLAUDE.md` § "Asking the User Questions" for the full rule.
+
 1. **Determine what to save**: Extract the key insight, preference, or pattern
 2. **Check existing memory**: Read `MEMORY.md` and scan topic files to avoid duplicates
 3. **Choose location**:

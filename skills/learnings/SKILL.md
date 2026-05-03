@@ -19,6 +19,8 @@ After completing a feature, fixing a hard bug, or finishing a session, capture w
 
 ## Process
 
+> **Ask via dialog:** When this skill needs a decision, preference, or clarification, call `AskUserQuestion` (`ToolSearch select:AskUserQuestion` if the schema isn't loaded). Don't embed questions in prose. See `~/.claude/CLAUDE.md` § "Asking the User Questions" for the full rule.
+
 ### 1. Reflect on the Work
 
 Review what just happened:

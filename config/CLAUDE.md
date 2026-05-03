@@ -5,6 +5,37 @@ Detailed rules auto-load from `~/.claude/rules/`.
 
 ---
 
+## Asking the User Questions
+
+When you need a **decision, preference, clarification, or choice** from the user, call
+the `AskUserQuestion` tool — never embed the question in a wall of prose.
+
+**Use AskUserQuestion for:**
+- Choices between approaches ("X vs Y vs Z")
+- Yes/no decisions before destructive or irreversible actions
+- Preference questions (style, scope, level of detail, model choice)
+- Clarifications when an instruction is genuinely ambiguous
+
+**Don't use AskUserQuestion for:**
+- Status updates or reports of completed work (use prose)
+- Rhetorical questions inside explanations
+- Truly open-ended questions with more than 4 viable answers (use short prose)
+
+**Pre-load on first need:** `AskUserQuestion` is a deferred tool. If you see it listed
+in the deferred-tools system reminder but its schema is not yet loaded, load it
+immediately via `ToolSearch` with query `select:AskUserQuestion`. Do not fall back to
+prose because "the schema wasn't loaded."
+
+**Format:** 2–4 options per question. If you recommend one, put it first with
+"(Recommended)" in the label. One-line description per option explaining the trade-off.
+The "Other" escape hatch is added automatically — don't add it manually. Use
+`multiSelect: true` when the answers are not mutually exclusive.
+
+**Plan mode:** `AskUserQuestion` is the right tool for clarifications during planning.
+For "is the plan ready?" use `ExitPlanMode` — not `AskUserQuestion`.
+
+---
+
 ## Workflow After Code Changes
 
 For changes **>20 lines or touching security/validation**:
