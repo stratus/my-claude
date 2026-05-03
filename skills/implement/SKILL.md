@@ -2,7 +2,7 @@
 name: implement
 description: Start implementing a feature with user story validation, phased execution, and quality gates. Use after planning is complete.
 model: opus
-argument-hint: "[feature description or phase number]"
+argument-hint: "[--phase N] [plan slug or feature description]"
 ---
 
 <!-- ultrathink: keyword trigger required because alwaysThinkingEnabled=false in settings.json -->
@@ -83,6 +83,20 @@ After passing the quality gate:
 - Suggest committing the phase
 - Summarize what was done
 - Preview next phase (if applicable)
+
+### 5. Single-Phase Mode (`--phase N`)
+
+When invoked as `/implement --phase N <plan-slug>` (e.g. by `/autopilot`), behave as follows:
+- Skip the pre-flight interview in section 1 — assume the plan was already approved when it was written
+- Execute **only** phase N from the plan file at `~/.claude/plans/<slug>.md`
+- Run that phase's `step → verify` block exactly as written
+- **Always** set `tests-passed` and `coverage-checked` markers, even for phases with no test surface (docs-only, config-only, scaffolding). For non-test phases, set `coverage-checked 100` since there is no executable code to leave uncovered. This prevents the 5-gate hook from blocking autopilot's per-phase commit
+- Do **not** set `code-reviewed` — the caller (`/autopilot`) invokes `code-reviewer` separately as part of its review-agent step
+- Skip the "suggest committing the phase" step in section 4 — the caller handles commits
+- Print a one-line summary: `Phase N complete: <files touched> · tests <pass/fail> · coverage <pct>`
+- Exit; do not preview the next phase
+
+This mode is harmless for manual users — without `--phase N`, behavior is unchanged.
 
 ## Output
 

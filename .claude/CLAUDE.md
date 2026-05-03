@@ -42,12 +42,13 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 
 ## Conventions
 
-### Skills (12 total)
+### Skills (13 total)
 - One directory per skill under `skills/`
 - Must have `SKILL.md` with YAML frontmatter (`name`, `description`, `model`)
 - All skills must have explicit `model:` (haiku for mechanical, sonnet for reasoning, opus for quality ceiling)
 - Sections: When to Use, Process, Output, Examples
 - Key skills: `/plan` → `/implement` → `/audit` → `/polish` → `/learnings`
+- Hands-off variant: `/plan` → `/autopilot <slug>` runs the whole plan unattended; stops only on hook exit 2, sandbox/network deny, or repeated test failure
 - See `skills/commit-messages/SKILL.md` for reference
 
 ### Agents (10 total)

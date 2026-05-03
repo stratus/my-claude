@@ -123,3 +123,16 @@ the check for a simple task.
 Present the plan and ask: "Does this plan look right? Should I adjust anything before we start Phase 1?"
 
 Do NOT start implementation until the user approves.
+
+### 7. Offer Autopilot
+
+Once the user approves the plan, ask via `AskUserQuestion`:
+
+> **Question**: "Plan saved to `~/.claude/plans/<slug>.md`. Run autopilot to execute it unattended?"
+> **Options**:
+> - `Run autopilot` — "Execute all phases hands-off; stop only on safety failures (hook exit 2, repeated test failure, sandbox/network deny). Journal at `<slug>.autopilot.md`."
+> - `Stop here` — "Review the plan; run `/implement` or `/autopilot` later."
+
+If the user picks `Run autopilot`, **emit the literal text `/autopilot <slug>` to the user as your final message and stop**. Do not call any tool. The user (or the session loop) will dispatch `/autopilot` on the next turn. This preserves the slash-dispatch surface as the only interrupt path; skills should never transitively invoke other skills.
+
+If the user picks `Stop here`, end with the slug in a single line: `Plan saved: ~/.claude/plans/<slug>.md`.

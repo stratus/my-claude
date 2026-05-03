@@ -107,6 +107,8 @@ Most agents are dispatched automatically by `/audit` and `/polish` — you rarel
 **Simple workflow**: `/plan` → `/implement` → `/polish`. Everything else is automatic.
 (`/plan` recommends `/egm` to Goldfish-test the design doc before `/implement` begins.)
 
+**Hands-off workflow**: `/plan` → accept the autopilot offer → `/autopilot <slug>`. Autopilot runs every phase, dispatches review agents, commits per phase, runs `/polish --non-interactive`, and stops only on hard failures (hook exit 2, sandbox/network deny, or a test that fails twice after `debug-specialist`). Soft ambiguity is auto-resolved with rationale logged to a journal at `~/.claude/plans/<slug>.autopilot.md`.
+
 ## Memory & Learning
 
 Claude Code has persistent auto memory at `~/.claude/projects/*/memory/`.

@@ -2,7 +2,7 @@
 name: polish
 description: Take a project from "it works" to "it's shippable." Runs audit, fixes findings, walks the Definition of Done checklist, and generates a release readiness score. Use before releasing, after feature-complete, or when quality feels prototype-y.
 model: opus
-argument-hint: "[project-type: web|cli|infra]"
+argument-hint: "[--non-interactive --journal <path>] [project-type: web|cli|infra]"
 ---
 
 <!-- ultrathink: keyword trigger required because alwaysThinkingEnabled=false in settings.json -->
@@ -207,3 +207,16 @@ Save each worthwhile learning to the project's memory (`~/.claude/projects/*/mem
 ```
 
 This closes the learning loop: `/polish` finds issues → fixes them → remembers them → future sessions avoid them.
+
+### 10. Non-Interactive Mode (`--non-interactive --journal <path>`)
+
+When invoked by `/autopilot` (or any caller that wants hands-off polish), behave as follows:
+- **Never** call `AskUserQuestion`
+- "Auto-fix" items in section 2 → fix as usual
+- "Requires human decision" items in section 2 → append them to a `## Needs Human Review` section in the journal file at `<path>` (atomic write: read whole file, modify in memory, write back). Do NOT prompt; do NOT block.
+- The Definition of Done checklist still runs; failing items that would require a design call go to the same `## Needs Human Review` section
+- The release readiness score still computes and is appended to the journal under `## Polish Result`
+- Skip the `Co-Authored-By` interactive checkpoints; commits remain the caller's responsibility
+- Exit with status describing how many items were auto-fixed and how many were escalated
+
+This mode is harmless for manual users — without `--non-interactive`, behavior is unchanged.
