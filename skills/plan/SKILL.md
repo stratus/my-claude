@@ -86,6 +86,32 @@ Break into **phases** with clear boundaries. Inside each phase, write steps in *
 
 Weak verify clauses ("make it work") are a smell — replace them with concrete checks (a passing test, a curl response, a screenshot, a log line).
 
+### 3b. Reliability Pass
+
+Before finalizing the plan, dispatch the `reliability-engineer` agent (opus, read-only)
+against the draft. It applies an SRE lens — Google SRE Book / Workbook + Nygard's
+*Release It!* — and surfaces:
+
+- Missing SLOs or unclear success/failure signals
+- Failure modes the design glosses over (timeouts, retries, circuit breakers, partial failure)
+- Observability gaps (golden signals, structured logs, trace IDs, alerts)
+- Rollback and blast-radius concerns (canary, feature flags, reversible migrations)
+- Capacity assumptions that aren't tested
+- Missing runbooks for the top 2 failure modes
+
+The agent produces a structured report with severity-classified findings. Fold its
+findings back into the plan — adjust phases, add tests, add observability tasks —
+before user approval.
+
+**Auto-dispatch by default.** Skip *only* for trivial plans (one-file changes, no
+production impact, internal tooling, config repo edits). When skipping, write a
+one-line skip clause directly into the plan output:
+
+> "Reliability pass skipped: <reason>"
+
+This forces the skip to be visible in the plan doc rather than silent. See
+`rules/reliability.md` for the SRE distillation the agent applies.
+
 ### 4. Review Checklist
 For each phase, verify:
 - [ ] Tests defined (unit + integration)
@@ -94,6 +120,7 @@ For each phase, verify:
 - [ ] Respects accepted Architecture Decisions
 - [ ] Documentation updates identified
 - [ ] CUJ impacts assessed (new CUJ needed? existing CUJ to update?)
+- [ ] Reliability concerns assessed (SLOs, failure modes, observability, rollback) — see `rules/reliability.md`
 - [ ] Can be demoed/verified independently
 
 ### 5. Session Recovery Block

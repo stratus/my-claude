@@ -96,6 +96,7 @@ Before implementing any feature, confirm:
 | `integration-tester` | When unit tests aren't enough — E2E, API, cross-component tests | sonnet |
 | `cuj-verifier` | Verify documented CUJs actually work, catch doc/code drift | sonnet |
 | `architect-reviewer` | Cross-component changes, new deps, AD compliance | opus |
+| `reliability-engineer` | Plan-time SRE lens: SLOs, failure modes, observability, rollback | opus |
 | `ux-reviewer` | Web projects: loading/empty/error states, a11y, responsive | sonnet |
 | `react-frontend` | React 19, Zustand, React Flow, Tailwind v4 | sonnet |
 | `python-backend` | FastAPI, async, Temporal, SQLAlchemy, Pydantic | sonnet |

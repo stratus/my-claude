@@ -19,7 +19,7 @@ Everything else (agents, markers, gates, learnings) is automatic.
 |----------------|-----|--------------------------|
 | Design a feature | `/plan` | Checks CUJs/ADs, designs phases |
 | Build the feature | `/implement` | Writes code + tests, sets markers per phase |
-| Check health (quick, read-only) | `/audit` | Dispatches up to 7 agents, produces report |
+| Check health (quick, read-only) | `/audit` | Dispatches up to 8 agents, produces report |
 | Ship it (active fixes) | `/polish` | Fixes findings, walks DoD, scores 0-100, saves learnings |
 
 **You don't need to remember**: running agents (code-reviewer runs automatically for >20 lines), setting markers (agents set them), capturing learnings (`/polish` does it), or checking CUJs/ADs (`/plan` and `/implement` do it).
@@ -50,6 +50,7 @@ Most agents are dispatched automatically by `/audit` and `/polish`. If you need 
 | Need integration/E2E tests | `integration-tester` | sonnet |
 | Verify CUJs still work | `cuj-verifier` | sonnet |
 | Cross-component changes | `architect-reviewer` | opus |
+| Production reliability concerns (SLOs, failure modes, rollback) | `reliability-engineer` | opus |
 | Web UI quality check | `ux-reviewer` | sonnet |
 | React/frontend work | `react-frontend` | sonnet |
 | Python/FastAPI work | `python-backend` | sonnet |

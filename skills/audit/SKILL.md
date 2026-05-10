@@ -38,7 +38,7 @@ Identify:
 - Whether a `.claude/CLAUDE.md` exists
 
 Detect project type for agent selection:
-- **All projects**: code-reviewer, security-analyst, docs-updater, architect-reviewer
+- **All projects**: code-reviewer, security-analyst, docs-updater, architect-reviewer, reliability-engineer
 - **Projects with CUJs**: cuj-verifier
 - **Web projects** (has package.json with frontend deps, HTML/JSX/TSX): ux-reviewer
 - **Projects with test gaps**: integration-tester
@@ -66,6 +66,14 @@ Capture the output.
 Run the **architect-reviewer** agent in read-only mode:
 
 > Review this project's architecture against its documented Architecture Decisions. Do NOT modify any files — report findings only. Check for: AD violations, undocumented architectural choices (new dependencies, new services, new patterns), coupling/cohesion issues, and layer violations.
+
+Capture the output.
+
+### 3c. Reliability Review
+
+Run the **reliability-engineer** agent in read-only mode:
+
+> Survey this project for reliability gaps. Do NOT modify any files — report findings only. Apply the SRE planning lens against shipped code: SLOs, failure modes (timeouts, retries, circuit breakers), observability (golden signals, structured logs, trace IDs), alerting, rollback paths, blast-radius controls, capacity, and runbooks for top failure modes. Skip with a written rationale if the project has no production runtime (config repo, library, prototype).
 
 Capture the output.
 
@@ -179,6 +187,20 @@ Combine findings into a single structured report:
 
 [Structural health: coupling, cohesion, layering]
 [Missing ADs for undocumented decisions]
+
+## Reliability
+
+| Dimension          | Status   | Notes |
+|--------------------|----------|-------|
+| SLI/SLO            | ✅/⚠️/❌/⏭ | [detail] |
+| Failure modes      | ✅/⚠️/❌/⏭ | [detail] |
+| Observability      | ✅/⚠️/❌/⏭ | [detail] |
+| Alerting           | ✅/⚠️/❌/⏭ | [detail] |
+| Rollback           | ✅/⚠️/❌/⏭ | [detail] |
+| Capacity           | ✅/⚠️/❌/⏭ | [detail] |
+| Runbooks           | ✅/⚠️/❌/⏭ | [detail] |
+
+[Top reliability findings with severity and remediation]
 
 ## CUJ & AD Coverage
 

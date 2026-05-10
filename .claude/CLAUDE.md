@@ -51,10 +51,10 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 - Hands-off variant: `/plan` → `/autopilot <slug>` runs the whole plan unattended; stops only on hook exit 2, sandbox/network deny, or repeated test failure
 - See `skills/commit-messages/SKILL.md` for reference
 
-### Agents (10 total)
+### Agents (11 total)
 - Markdown files in `config/agents/` with frontmatter: `model`, `tools`, `maxTurns`, `color`
 - Core workflow: code-reviewer → security-analyst → docs-updater
-- Quality specialists: integration-tester, cuj-verifier, architect-reviewer (opus), ux-reviewer
+- Quality specialists: integration-tester, cuj-verifier, architect-reviewer (opus), reliability-engineer (opus), ux-reviewer
 - Stack specialists: react-frontend, python-backend, debug-specialist
 
 ### Pre-Commit Gate (5 blocking gates)
