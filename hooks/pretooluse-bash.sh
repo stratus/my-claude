@@ -49,6 +49,16 @@ if echo "$COMMAND" | grep -qE '\bgit\s+commit\b'; then
     IS_GIT_COMMIT=true
 fi
 
+# Autopilot bypass eligibility — set when CLAUDE_AUTOPILOT=1 and the command
+# is a `git *` invocation other than `git commit`. Resolved AFTER Phase A so
+# dangerous patterns (force push to protected branches, etc.) still block.
+AUTOPILOT_GIT_ALLOW=false
+if [[ "${CLAUDE_AUTOPILOT:-0}" == "1" ]] \
+   && [[ "$IS_GIT_COMMIT" == "false" ]] \
+   && echo "$COMMAND" | grep -qE '^[[:space:]]*git([[:space:]]|$)'; then
+    AUTOPILOT_GIT_ALLOW=true
+fi
+
 # =============================================================================
 # Phase A — dangerous-command scan
 # =============================================================================
@@ -126,6 +136,14 @@ if [[ "$PRIMARY_GIT_COMMIT" == "false" ]]; then
         echo "Tip: Use environment variables instead of reading .env directly" >&2
         exit 2
     fi
+fi
+
+# Autopilot bypass — emit explicit allow decision for safe `git *` commands
+# (Phase A's dangerous patterns above already vetoed force-push-to-main, etc.).
+# `git commit` deliberately falls through to Phase B so the 5-gate still runs.
+if [[ "$AUTOPILOT_GIT_ALLOW" == "true" ]]; then
+    echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow"}}'
+    exit 0
 fi
 
 # =============================================================================
@@ -223,6 +241,17 @@ marker_is_fresh() {
 BLOCKING_ISSUES=""
 WARNINGS=""
 
+# Trivial-change carve-out: when ≤20 lines change AND no file is security-
+# sensitive AND no file is user-facing, the commit gets a pass on Gate 3
+# (tests-passed) and Gate 4 (coverage-checked). This mirrors the existing
+# Gate 1 threshold: small, low-risk changes (typo fixes, comment tweaks,
+# config nudges) shouldn't require running the full test+coverage harness.
+# Gates 1, 2, 5 already self-gate on their triggers and remain active.
+TRIVIAL_CHANGE=false
+if [[ "$LINES_CHANGED" -le 20 && -z "$SECURITY_FILES" && -z "$USER_FACING" ]]; then
+    TRIVIAL_CHANGE=true
+fi
+
 # Gate 1: Large changes require code review
 if [[ "$LINES_CHANGED" -gt 20 ]]; then
     if ! marker_is_fresh "$MARKER_DIR/code-reviewed"; then
@@ -244,32 +273,34 @@ if [[ -n "$SECURITY_FILES" ]]; then
     fi
 fi
 
-# Gate 3: Tests must pass
-if ! marker_is_fresh "$MARKER_DIR/tests-passed"; then
+# Gate 3: Tests must pass (skipped for trivial changes)
+if [[ "$TRIVIAL_CHANGE" == "false" ]] && ! marker_is_fresh "$MARKER_DIR/tests-passed"; then
     BLOCKING_ISSUES="${BLOCKING_ISSUES}🧪 Tests must pass before commit\n"
     BLOCKING_ISSUES="${BLOCKING_ISSUES}   → Run tests for your project, then: ~/.claude/hooks/mark-reviewed.sh --tests\n"
     BLOCKING_ISSUES="${BLOCKING_ISSUES}   → Or run the code-reviewer agent (it sets this marker automatically)\n\n"
 fi
 
-# Gate 4: Coverage must meet threshold (80%)
-COVERAGE_MARKER="$MARKER_DIR/coverage-checked"
-if [[ -f "$COVERAGE_MARKER" ]]; then
-    COVERAGE_CONTENT=$(cat "$COVERAGE_MARKER" 2>/dev/null || echo "0:0")
-    COVERAGE_TIME="${COVERAGE_CONTENT%%:*}"
-    COVERAGE_PCT="${COVERAGE_CONTENT##*:}"
-    COVERAGE_AGE=$(( $(date +%s) - COVERAGE_TIME ))
-    if [[ $COVERAGE_AGE -ge $MARKER_TTL ]]; then
-        rm -f "$COVERAGE_MARKER" 2>/dev/null || true
-        BLOCKING_ISSUES="${BLOCKING_ISSUES}📊 Coverage check expired — re-run tests with coverage\n"
-        BLOCKING_ISSUES="${BLOCKING_ISSUES}   → Then: ~/.claude/hooks/mark-reviewed.sh --coverage <pct>\n\n"
-    elif [[ "$COVERAGE_PCT" -lt 80 ]]; then
-        BLOCKING_ISSUES="${BLOCKING_ISSUES}📊 Coverage too low: ${COVERAGE_PCT}% (minimum: 80%)\n"
-        BLOCKING_ISSUES="${BLOCKING_ISSUES}   → Increase test coverage, then: ~/.claude/hooks/mark-reviewed.sh --coverage <pct>\n\n"
+# Gate 4: Coverage must meet threshold (80%) (skipped for trivial changes)
+if [[ "$TRIVIAL_CHANGE" == "false" ]]; then
+    COVERAGE_MARKER="$MARKER_DIR/coverage-checked"
+    if [[ -f "$COVERAGE_MARKER" ]]; then
+        COVERAGE_CONTENT=$(cat "$COVERAGE_MARKER" 2>/dev/null || echo "0:0")
+        COVERAGE_TIME="${COVERAGE_CONTENT%%:*}"
+        COVERAGE_PCT="${COVERAGE_CONTENT##*:}"
+        COVERAGE_AGE=$(( $(date +%s) - COVERAGE_TIME ))
+        if [[ $COVERAGE_AGE -ge $MARKER_TTL ]]; then
+            rm -f "$COVERAGE_MARKER" 2>/dev/null || true
+            BLOCKING_ISSUES="${BLOCKING_ISSUES}📊 Coverage check expired — re-run tests with coverage\n"
+            BLOCKING_ISSUES="${BLOCKING_ISSUES}   → Then: ~/.claude/hooks/mark-reviewed.sh --coverage <pct>\n\n"
+        elif [[ "$COVERAGE_PCT" -lt 80 ]]; then
+            BLOCKING_ISSUES="${BLOCKING_ISSUES}📊 Coverage too low: ${COVERAGE_PCT}% (minimum: 80%)\n"
+            BLOCKING_ISSUES="${BLOCKING_ISSUES}   → Increase test coverage, then: ~/.claude/hooks/mark-reviewed.sh --coverage <pct>\n\n"
+        fi
+    else
+        BLOCKING_ISSUES="${BLOCKING_ISSUES}📊 Coverage check required before commit\n"
+        BLOCKING_ISSUES="${BLOCKING_ISSUES}   → Run tests with coverage, then: ~/.claude/hooks/mark-reviewed.sh --coverage <pct>\n"
+        BLOCKING_ISSUES="${BLOCKING_ISSUES}   → Or run the code-reviewer agent (it sets this marker automatically)\n\n"
     fi
-else
-    BLOCKING_ISSUES="${BLOCKING_ISSUES}📊 Coverage check required before commit\n"
-    BLOCKING_ISSUES="${BLOCKING_ISSUES}   → Run tests with coverage, then: ~/.claude/hooks/mark-reviewed.sh --coverage <pct>\n"
-    BLOCKING_ISSUES="${BLOCKING_ISSUES}   → Or run the code-reviewer agent (it sets this marker automatically)\n\n"
 fi
 
 # Gate 5: User-facing changes require docs review

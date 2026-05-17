@@ -56,6 +56,10 @@ For **small changes (<20 lines, non-security)**: Run tests and linter, set marke
 Markers expire after 10 minutes. If blocked, follow the error message instructions.
 Use `~/.claude/hooks/mark-reviewed.sh --all` as escape hatch when consciously skipping.
 
+**Trivial-change carve-out**: Gates 3 (tests) and 4 (coverage) are skipped when ALL of: ≤20 lines changed, no security-sensitive files, and no user-facing files (matches Gate 1's threshold). Typo fixes, comment tweaks, and small config nudges commit without a full test cycle. Gates 1, 2, and 5 still self-gate on their triggers.
+
+**Permission prompts**: most Bash now runs silently — safe git (`status`, `diff`, `log`, `add`, `commit -m`, `checkout -b`, ...) and common build/test tools (`go *`, `npm *`, `pytest *`, `uv *`, `cargo *`, `make *`, `gh *`, linters, formatters) are pre-approved in `permissions.allow`. You will still see prompts for destructive git: `push`, `pull`, `reset --hard`, `rebase`, `merge`, `branch -D`, `clean -fd`, `checkout main|master`, etc. Under `/autopilot` even those run silently (env var `CLAUDE_AUTOPILOT=1` flips `ask` → `allow` for git in the Bash hook); the dangerous-pattern checks and 5-gate commit blocker still apply.
+
 ## New Project Setup
 
 If project lacks `.claude/CLAUDE.md`: **ASK** user to create one before coding.

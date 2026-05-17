@@ -36,6 +36,7 @@ Run an approved plan from end to end without per-phase confirmation. Stops only 
 3. Compute SHA-256 of the plan file and store in the journal header. Re-check before each phase; if it changed → **hard stop** ("plan file mutated mid-run; resume with `/autopilot <slug>` after reviewing changes").
 4. Verify `git status` is clean OR the journal exists with a recorded last commit SHA that matches `git rev-parse HEAD` (resume case).
 5. Create or open the journal at `~/.claude/plans/<slug>.autopilot.md` and write the run header (see section 8). On open, hold a lockfile at `~/.claude/plans/<slug>.autopilot.lock` (mkdir-based mutex) — if the lock exists and the holder PID is alive → hard stop ("another autopilot run in progress for this plan"). Release on exit.
+6. **Export `CLAUDE_AUTOPILOT=1`** for the duration of the run (`export CLAUDE_AUTOPILOT=1` as the first Bash call). `pretooluse-bash.sh` reads it and emits a `permissionDecision: "allow"` for every `git *` invocation other than `git commit`, so destructive git ops (`git push`, `git reset --hard`, `git rebase`, branch deletes, etc.) that would otherwise hit `permissions.ask` and prompt the user instead run silently. **Force-push to protected branches, `rm -rf /`, `mkfs`, and the rest of Phase A's dangerous-pattern list still block under autopilot — the bypass is for `ask` rules, not safety vetoes.** `git commit` deliberately falls through to Phase B so the 5-gate review still runs. Unset the variable on clean exit (`unset CLAUDE_AUTOPILOT`); on hard stop, the variable dies with the shell.
 
 ### 2. Per-Phase Loop
 
@@ -93,6 +94,8 @@ These are the **only** paths that pause for the user:
 - `git status` is dirty at start and there is no recoverable journal
 
 On hard stop: write the reason to the journal, print the failing command + hook stderr, exit. Do NOT auto-`mark-reviewed.sh --all` — the marker bypass is a conscious human override, not an autopilot capability.
+
+**Note on the `CLAUDE_AUTOPILOT=1` bypass (section 1, step 6)**: It downgrades `permissions.ask` to `allow` for safe `git *` only. It does NOT loosen Phase A's dangerous-pattern checks, does NOT loosen Phase B's 5-gate commit blocker, and does NOT silence `block-secrets-wrapper.sh`. A commit that fails the 5-gate under autopilot is still a hard stop.
 
 ### 7. Soft Ambiguity Rule
 
@@ -159,7 +162,7 @@ The interactive pause is **not** the safety boundary — these are:
 - **Per-phase commits**: Bisectable; rollback is `git reset --hard <phase-N-sha>`.
 - **Journal**: Full audit trail the user reviews after the run.
 
-What autopilot **removes** is the per-phase pause and the soft-ambiguity prompt — both UX choices, not safety features.
+What autopilot **removes** is the per-phase pause, the soft-ambiguity prompt, and the per-`git push`/`git reset --hard`/`git rebase`/... prompt — all UX choices, not safety features. The dangerous-pattern hook, the 5-gate commit blocker, the secret blocker, and the sandbox network deny all remain active.
 
 ## Output
 

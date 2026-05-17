@@ -69,11 +69,24 @@ send_notification() {
     fi
     
     # Windows WSL
+    #
+    # Base64-encode title/message on the bash side so the PowerShell template
+    # never interpolates user-controlled text directly into XML. Decoded
+    # values are XML-escaped via [System.Security.SecurityElement]::Escape
+    # before being injected, so a message containing </text> or & can't
+    # break or hijack the toast XML.
     if grep -qi microsoft /proc/version 2>/dev/null; then
+        local title_b64 message_b64
+        title_b64=$(printf '%s' "$title" | base64 | tr -d '\n')
+        message_b64=$(printf '%s' "$message" | base64 | tr -d '\n')
         powershell.exe -Command "
             [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
             [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
-            \$template = '<toast><visual><binding template=\"ToastText02\"><text id=\"1\">$title</text><text id=\"2\">$message</text></binding></visual></toast>'
+            \$titleRaw   = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${title_b64}'))
+            \$messageRaw = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${message_b64}'))
+            \$titleXml   = [System.Security.SecurityElement]::Escape(\$titleRaw)
+            \$messageXml = [System.Security.SecurityElement]::Escape(\$messageRaw)
+            \$template = '<toast><visual><binding template=\"ToastText02\"><text id=\"1\">' + \$titleXml + '</text><text id=\"2\">' + \$messageXml + '</text></binding></visual></toast>'
             \$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
             \$xml.LoadXml(\$template)
             \$toast = [Windows.UI.Notifications.ToastNotification]::new(\$xml)

@@ -49,23 +49,33 @@ EXTENSION="${FILE_PATH##*.}"
 # Run formatters in background so PostToolUse returns immediately and the
 # agent loop is not blocked. Format-on-save is a "nice to have"; the commit
 # gate enforces formatting at commit time anyway.
+#
+# Each formatter is wrapped in a 5-second guard so a wedged or pathologically
+# slow formatter (e.g. prettier on a 50MB JSON) cannot orphan the subprocess.
+# Uses GNU `timeout` if available (coreutils via Homebrew on macOS), or
+# `gtimeout`, otherwise falls back to no guard.
+if   command -v timeout  &>/dev/null; then GUARD=(timeout 5)
+elif command -v gtimeout &>/dev/null; then GUARD=(gtimeout 5)
+else GUARD=()  # no guard available; formatter runs unconstrained
+fi
+
 (
     case "$EXTENSION" in
         js|jsx|ts|tsx|json|md|yaml|yml|css|scss|html)
-            command -v prettier &>/dev/null && prettier --write "$FILE_PATH" 2>/dev/null || true
+            command -v prettier &>/dev/null && "${GUARD[@]+"${GUARD[@]}"}" prettier --write "$FILE_PATH" 2>/dev/null || true
             ;;
         py)
-            command -v black &>/dev/null && black --quiet "$FILE_PATH" 2>/dev/null || true
-            command -v ruff  &>/dev/null && ruff check --fix --silent "$FILE_PATH" 2>/dev/null || true
+            command -v black &>/dev/null && "${GUARD[@]+"${GUARD[@]}"}" black --quiet "$FILE_PATH" 2>/dev/null || true
+            command -v ruff  &>/dev/null && "${GUARD[@]+"${GUARD[@]}"}" ruff check --fix --silent "$FILE_PATH" 2>/dev/null || true
             ;;
         go)
-            command -v gofmt &>/dev/null && gofmt -w "$FILE_PATH" 2>/dev/null || true
+            command -v gofmt &>/dev/null && "${GUARD[@]+"${GUARD[@]}"}" gofmt -w "$FILE_PATH" 2>/dev/null || true
             ;;
         rs)
-            command -v rustfmt &>/dev/null && rustfmt "$FILE_PATH" 2>/dev/null || true
+            command -v rustfmt &>/dev/null && "${GUARD[@]+"${GUARD[@]}"}" rustfmt "$FILE_PATH" 2>/dev/null || true
             ;;
         sh|bash)
-            command -v shfmt &>/dev/null && shfmt -w "$FILE_PATH" 2>/dev/null || true
+            command -v shfmt &>/dev/null && "${GUARD[@]+"${GUARD[@]}"}" shfmt -w "$FILE_PATH" 2>/dev/null || true
             ;;
     esac
 ) </dev/null >/dev/null 2>&1 &

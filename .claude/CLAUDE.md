@@ -66,10 +66,23 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 - Stale CUJ/AD touching changed code also blocks
 - Escape hatch: `mark-reviewed.sh --all`
 
+**Trivial-change carve-out**: Gates 3 (tests) and 4 (coverage) are skipped when ALL of: `LINES_CHANGED ≤ 20`, no changed file matches the security pattern, and no changed file matches the user-facing pattern. This mirrors Gate 1's threshold so typo fixes, comment tweaks, and small config nudges commit cleanly without a full test+coverage cycle. Gates 1, 2, and 5 stay active on their own triggers.
+
 ### Hooks
 - Shell scripts in `hooks/`
 - Must be executable (`chmod +x`)
 - Referenced from `config/settings.json`
+
+### Permission Posture
+
+Bash commands are gated in this order: `deny` → `ask` → `allow` (first match wins), then any explicit hook decision overrides.
+
+- **`permissions.allow`** — silent auto-approve. Covers safe git (`status`, `diff`, `log`, `add`, `commit -m`, `checkout -b`, `fetch`, ...), most local language tools (`go *`, `npm *`, `pytest *`, `uv *`, `cargo *`, `make *`, `ansible *`, `gh *`, linters, formatters, ...), and the `mark-reviewed.sh` helpers.
+- **`permissions.ask`** — always prompts. Reserved for destructive or remote git: `push`, `pull`, `reset --hard`, `rebase`, `merge`, `branch -D`, `clean -fd`, `stash drop`, `revert`, `cherry-pick`, `tag -d`, `remote add/remove/set-url`, and `checkout/switch main|master`.
+- **`permissions.deny`** — hard-blocks. Reads of `.env*`, `*.pem`, `*.key`, and anything under `./secrets/`.
+- **`defaultMode: "acceptEdits"`** — file edits/writes auto-approve. The `block-secrets-wrapper.sh` PreToolUse hook still independently blocks Edit/Write to secret paths, so this is safe.
+
+Under `/autopilot`, the env var `CLAUDE_AUTOPILOT=1` is exported. The `pretooluse-bash.sh` hook reads it and emits `permissionDecision: "allow"` for every `git *` invocation other than `git commit`. This silences the destructive-git prompts during a hands-off run **without** disabling: Phase A dangerous-pattern checks (force-push-to-protected-branch, `rm -rf /`, `mkfs`, etc.), Phase B's 5-gate commit blocker, or the secret blocker.
 
 ## Testing Changes
 
