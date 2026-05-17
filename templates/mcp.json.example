@@ -1,12 +1,25 @@
 {
+  "//": "Recommended MCP servers for a new Claude Code project. Copy to .mcp.json in the project root.",
   "mcpServers": {
     "context7": {
+      "//": "Up-to-date library/framework documentation lookup (Upstash). npm/npx only.",
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp"]
     },
     "playwright": {
+      "//": "Headless-browser automation for UI verification. Web projects only.",
       "command": "npx",
       "args": ["-y", "@playwright/mcp"]
+    },
+    "memory": {
+      "//": "Knowledge-graph-backed persistent memory across sessions. Complements ~/.claude/projects/*/memory/. Maintained by Anthropic at github.com/modelcontextprotocol/servers.",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "time": {
+      "//": "Time + timezone utilities. Prevents time-bomb bugs from hardcoded dates. Requires `uv` (install via `brew install uv`). Remove this entry if uv is unavailable.",
+      "command": "uvx",
+      "args": ["mcp-server-time"]
     }
   }
 }

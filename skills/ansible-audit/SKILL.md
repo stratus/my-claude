@@ -3,6 +3,7 @@ name: ansible-audit
 description: Audit Ansible playbooks, roles, collections, and inventories for production readiness. Use when reviewing an Ansible repo, before merging IaC PRs, before promoting a role to a collection, or when the user mentions ansible-lint, idempotency, vault, or molecule.
 model: sonnet
 argument-hint: "[path-to-repo-or-playbook]"
+paths: "**/playbook*.yml,**/playbook*.yaml,**/site.yml,**/site.yaml,**/inventory/**,**/roles/**,**/collections/**,**/molecule/**,ansible.cfg,requirements.yml,galaxy.yml"
 allowed-tools: Read, Grep, Glob, Bash(ansible-lint *), Bash(yamllint *), Bash(molecule *), Bash(ansible-playbook *), Bash(ansible *), Bash(command -v *), Bash(grep *), Bash(git log *), Bash(find *)
 ---
 

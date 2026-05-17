@@ -73,6 +73,15 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 - Must be executable (`chmod +x`)
 - Referenced from `config/settings.json`
 
+Wired events (6):
+- **PreToolUse / Bash** → `pretooluse-bash.sh` (dangerous-pattern scan + 5-gate commit blocker + autopilot bypass)
+- **PreToolUse / Edit|Write** → `block-secrets-wrapper.sh` (fast secret-path veto)
+- **PostToolUse / Edit|Write** → `after-edit.sh` (background format-on-save with timeout guard)
+- **Notification** → `notify.sh` (desktop notifications)
+- **SessionStart / startup** → `session-start-prune-markers.sh` (delete review markers >1h old to prevent stale-marker confusion)
+- **UserPromptExpansion / plan|implement|autopilot|polish|audit** → `log-skill-usage.sh` (one-line TSV log to `~/.claude/skill-usage.log` for the long-running workflow skills)
+- **PreCompact / manual|auto** → `pre-compact-snapshot.sh` (writes a small recovery snapshot to `~/.claude/projects/<slug>/last-pre-compact.md` with branch, HEAD, recent commits, staged files, most recent plan)
+
 ### Permission Posture
 
 Bash commands are gated in this order: `deny` → `ask` → `allow` (first match wins), then any explicit hook decision overrides.
