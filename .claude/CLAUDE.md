@@ -42,7 +42,7 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 
 ## Conventions
 
-### Skills (13 total)
+### Skills (14 total)
 - One directory per skill under `skills/`
 - Must have `SKILL.md` with YAML frontmatter (`name`, `description`, `model`)
 - All skills must have explicit `model:` (haiku for mechanical, sonnet for reasoning, opus for quality ceiling)
@@ -51,11 +51,11 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 - Hands-off variant: `/plan` → `/autopilot <slug>` runs the whole plan unattended; stops only on hook exit 2, sandbox/network deny, or repeated test failure
 - See `skills/commit-messages/SKILL.md` for reference
 
-### Agents (11 total)
+### Agents (12 total)
 - Markdown files in `config/agents/` with frontmatter: `model`, `tools`, `maxTurns`, `color`
 - Core workflow: code-reviewer → security-analyst → docs-updater
 - Quality specialists: integration-tester, cuj-verifier, architect-reviewer (opus), reliability-engineer (opus), ux-reviewer
-- Stack specialists: react-frontend, python-backend, debug-specialist
+- Stack specialists: react-frontend, python-backend, ansible-engineer, debug-specialist
 
 ### Pre-Commit Gate (5 blocking gates)
 - Gate 1: Code review (>20 lines) — marker: `code-reviewed`

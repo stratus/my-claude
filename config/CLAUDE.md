@@ -100,6 +100,7 @@ Before implementing any feature, confirm:
 | `ux-reviewer` | Web projects: loading/empty/error states, a11y, responsive | sonnet |
 | `react-frontend` | React 19, Zustand, React Flow, Tailwind v4 | sonnet |
 | `python-backend` | FastAPI, async, Temporal, SQLAlchemy, Pydantic | sonnet |
+| `ansible-engineer` | Ansible playbooks, roles, collections, molecule testing | sonnet |
 
 **Skip agents** for trivial changes (<20 lines, non-security, no user-facing impact).
 

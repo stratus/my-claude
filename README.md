@@ -7,7 +7,7 @@ Personal Claude Code configuration repository. Deploys global standards, agents,
 This repo is the source of truth for a Claude Code setup that emphasizes:
 
 - **Quality ratchets** — pre-commit gate with 5 blocking checks (review, security, tests, coverage, docs)
-- **Specialized agents** — 10 sub-agents for code review, security, debugging, integration testing, architecture, UX, and more
+- **Specialized agents** — 12 sub-agents for code review, security, debugging, integration testing, architecture, reliability, UX, and stack work (React, Python, Ansible)
 - **Workflow skills** — `/plan` → `/implement` → `/polish` covers most of a feature lifecycle
 - **Auto-loaded rules** — modular guidance under `~/.claude/rules/` instead of one monolithic CLAUDE.md
 - **Reusable templates** — Next.js, React Native, Go CLI, plus CUJ/ADR/MCP scaffolds
@@ -59,9 +59,9 @@ my-claude/
 │   ├── PERMISSIONS-GUIDE.md      # Permissions and sandbox notes
 │   ├── settings.json             # Hooks, permissions, sandbox config
 │   ├── rules/*.md                # Auto-loaded rule files
-│   ├── agents/*.md               # 10 sub-agent definitions
+│   ├── agents/*.md               # 12 sub-agent definitions
 │   └── statusline/               # Statusline wrapper + Config.toml
-├── skills/<name>/SKILL.md        # 12 slash-command skills → ~/.claude/commands/
+├── skills/<name>/SKILL.md        # 14 slash-command skills → ~/.claude/commands/
 ├── hooks/*.sh                    # Event hooks → ~/.claude/hooks/ (chmod +x)
 ├── docs/                         # Reference docs (GUIDE.md, mcp-setup.md)
 ├── templates/                    # Project scaffolds + doc templates
@@ -110,9 +110,11 @@ Markdown definitions in `config/agents/` deploy to `~/.claude/agents/`.
 | `integration-tester` | sonnet | E2E tests, API contracts, cross-component flows |
 | `cuj-verifier` | sonnet | Walks documented Critical User Journeys to catch doc/code drift |
 | `architect-reviewer` | opus | Cross-component changes, new dependencies, AD compliance |
+| `reliability-engineer` | opus | SLOs, failure modes, observability, rollback — plan-time SRE lens |
 | `ux-reviewer` | sonnet | Loading/empty/error states, a11y, responsive design |
 | `react-frontend` | sonnet | React 19, Zustand, React Flow, Tailwind v4 |
 | `python-backend` | sonnet | FastAPI, async, Temporal, SQLAlchemy, Pydantic |
+| `ansible-engineer` | sonnet | Ansible playbooks, roles, collections, molecule testing |
 
 Most agents dispatch automatically from `/audit` and `/polish`.
 
@@ -125,10 +127,12 @@ Each skill is a directory under `skills/` with a `SKILL.md`. Deployed to `~/.cla
 | `/plan` | opus | Interview, design phased approach, produce implementation plan |
 | `/egm` | opus | Goldfish Protocol — verify design doc completeness before implementing |
 | `/implement` | opus | Phased execution with quality gates after planning |
+| `/autopilot` | opus | Hands-off plan execution — runs phases, dispatches review agents, commits per phase |
 | `/audit` | sonnet | Read-only health report (code, security, docs, CUJ/AD) |
 | `/polish` | opus | Fix audit findings, walk DoD, score 0-100, save learnings |
 | `/learnings` | haiku | Capture what went well/wrong after a feature or hard fix |
 | `/security-audit` | sonnet | Vulnerability scan with OWASP reference material |
+| `/ansible-audit` | sonnet | Production-readiness audit for Ansible playbooks, roles, collections, molecule scenarios |
 | `/commit-messages` | haiku | Generate conventional commit messages from staged diff |
 | `/pr` | haiku | Create PR with title, description, test plan, linked issues |
 | `/cuj` | haiku | Scaffold a new Critical User Journey document |
