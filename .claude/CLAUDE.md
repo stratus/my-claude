@@ -17,7 +17,13 @@ Configuration repo that deploys Claude Code settings to `~/.claude/`. Contains g
 
 `config/settings.json` ships identity-neutral. Per-target identity (name, email, optional org prose, optional `[includeIf]` git block) is configured by `make set-identity`, which writes `$CLAUDE_DIR/identity.json` — a gitignored file under the *deploy* target, not the repo. `install.sh` re-applies the overlay on every run by splicing `environment_extras` between the markers in `settings.json`. Source of truth lives outside the repo; the repo only holds placeholders.
 
-To revert a target to placeholders: `make unset-identity` (deletes `identity.json` and re-runs install with `FORCE_UPDATE=1`).
+**gitdir patterns are about work-repo trees, not `$CLAUDE_DIR`.** Common trap: someone running `make set-identity CLAUDE_TARGETS=~/.claude-corp` types `~/.claude-corp/` at the gitdir prompt because that's what's in front of them. But the includeIf needs to match the directory tree where **work repos** live (e.g. `~/claude-corp/`, `~/work/nvidia/`), which is usually unrelated to the Claude config dir. The script's prompt copy now makes this explicit and supports multiple comma-separated patterns.
+
+Three orthogonal revert paths:
+
+- `make unset-identity` — deletes `$CLAUDE_DIR/identity.json` and re-runs install with `FORCE_UPDATE=1` to restore `settings.json` placeholders. Does NOT touch `~/.gitconfig`.
+- `make unset-git-identity` — removes only the `[includeIf]` path values this tooling wrote to `~/.gitconfig` (uses `git config --unset --fixed-value` for surgical removal); deletes `$CLAUDE_DIR/.gitconfig.d/identity.inc`. Does NOT touch `identity.json`. Writes a timestamped+PID-suffixed backup of `~/.gitconfig` first.
+- `make reset-all-identity` — both of the above.
 
 ## Deployment
 

@@ -64,13 +64,36 @@ This walks you through:
 
 - Your name and email (used to render the Auto Mode `environment` prose that the permission classifier reads)
 - Optional organization-specific trust prose (e.g., internal domains your employer's tools live on)
-- Optional `[includeIf "gitdir:..."]` block in `~/.gitconfig` that scopes `user.name` / `user.email` to a specific directory tree
+- Optional `[includeIf "gitdir:..."]` stanzas in `~/.gitconfig` that scope `user.name` / `user.email` to one or more **work-repo directory trees**
 
-The resulting `$CLAUDE_DIR/identity.json` is gitignored — it lives in your deploy target, never in the repo. To revert to placeholders:
+### gitdir patterns describe work-repo trees, not your Claude config dir
+
+When prompted for `gitdir` patterns, supply the directory tree(s) under which you **clone your actual git repos** — not your `$CLAUDE_DIR`. These are often different. Example for a typical NVIDIA developer:
+
+```
+Claude config dir:  ~/.claude-corp/        (where settings.json lives)
+Work repo tree:     ~/claude-corp/         (where corp git repos are cloned)
+```
+
+You can supply multiple comma-separated patterns in one prompt:
+
+```
+Patterns: ~/claude-corp/, ~/work/nvidia/, ~/src/nvidia/
+```
+
+Each becomes its own `[includeIf "gitdir/i:..."]` stanza pointing at the same `identity.inc`. Patterns must end with `/`. macOS defaults to case-insensitive matching (`gitdir/i:`); Linux to case-sensitive (`gitdir:`).
+
+**Note on symlinks:** git's gitdir matching uses the canonical path of the `.git` directory. If your repo path traverses a symlink (e.g. `~/work` is a symlink to `/Volumes/external/work`), supply the canonical form as the pattern.
+
+The resulting `$CLAUDE_DIR/identity.json` is gitignored — it lives in your deploy target, never in the repo. To revert:
 
 ```bash
-make unset-identity
+make unset-identity         # remove identity.json overlay (restore settings.json placeholders)
+make unset-git-identity     # remove the [includeIf] stanzas this tooling wrote to ~/.gitconfig
+make reset-all-identity     # both of the above
 ```
+
+`unset-git-identity` is surgical: it removes only the `path = ` values pointing at this target's `identity.inc`. Legacy `[includeIf]` stanzas under the same subsection (if you had one before) are left intact. A timestamped backup of `~/.gitconfig` is written before any mutation.
 
 ## Repository Structure
 
