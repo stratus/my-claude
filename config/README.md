@@ -1,6 +1,6 @@
 # Claude Code Configuration
 
-This is the deployed `~/.claude/` configuration. Source repo: [my-claude](https://github.com/stratus/my-claude).
+This is the deployed `~/.claude/` configuration — auto-generated from the `my-claude` source repository you cloned, then customized by your identity overlay (if any).
 
 ## What's Here
 
@@ -55,7 +55,7 @@ To contribute changes back, edit the corresponding source file in `~/my-claude/c
 
 ## More
 
-- **Source repo**: [github.com/stratus/my-claude](https://github.com/stratus/my-claude)
-- **Long-form guide**: [docs/GUIDE.md](https://github.com/stratus/my-claude/blob/main/docs/GUIDE.md)
-- **MCP setup**: [docs/mcp-setup.md](https://github.com/stratus/my-claude/blob/main/docs/mcp-setup.md)
+- **Long-form guide**: `docs/GUIDE.md` (in your source clone of `my-claude`)
+- **MCP setup**: `docs/mcp-setup.md` (in your source clone of `my-claude`)
+- **Identity setup**: run `make set-identity` from your source clone to configure name/email
 - **Official docs**: https://docs.claude.com/en/docs/claude-code

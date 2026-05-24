@@ -31,7 +31,8 @@ command -v jq git shasum bash python3 >/dev/null && echo "ok"
 ## Installation
 
 ```bash
-git clone git@github.com:stratus/my-claude.git ~/my-claude
+# Replace YOUR-FORK with your GitHub username (or use the upstream URL if you haven't forked)
+git clone git@github.com:YOUR-FORK/my-claude.git ~/my-claude
 cd ~/my-claude
 make install
 ```
@@ -50,6 +51,27 @@ To remove a deployed config (creates a backup first):
 make clean
 ```
 
+## Personalizing your install
+
+`make install` ships an identity-neutral configuration — `config/settings.json` contains a placeholder developer description rather than anyone's real name or email. To configure your own identity:
+
+```bash
+make set-identity                                            # writes ~/.claude/identity.json
+make set-identity CLAUDE_TARGETS="~/.claude ~/.claude-corp"  # per-target prompts
+```
+
+This walks you through:
+
+- Your name and email (used to render the Auto Mode `environment` prose that the permission classifier reads)
+- Optional organization-specific trust prose (e.g., internal domains your employer's tools live on)
+- Optional `[includeIf "gitdir:..."]` block in `~/.gitconfig` that scopes `user.name` / `user.email` to a specific directory tree
+
+The resulting `$CLAUDE_DIR/identity.json` is gitignored — it lives in your deploy target, never in the repo. To revert to placeholders:
+
+```bash
+make unset-identity
+```
+
 ## Repository Structure
 
 ```
@@ -63,6 +85,7 @@ my-claude/
 │   └── statusline/               # Statusline wrapper + Config.toml
 ├── skills/<name>/SKILL.md        # 14 slash-command skills → ~/.claude/commands/
 ├── hooks/*.sh                    # Event hooks → ~/.claude/hooks/ (chmod +x)
+├── scripts/                      # Setup helpers (set-identity.sh, etc.)
 ├── docs/                         # Reference docs (GUIDE.md, mcp-setup.md)
 ├── templates/                    # Project scaffolds + doc templates
 │   ├── nextjs/.claude/CLAUDE.md

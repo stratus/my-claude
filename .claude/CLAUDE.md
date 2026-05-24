@@ -11,6 +11,13 @@ Configuration repo that deploys Claude Code settings to `~/.claude/`. Contains g
 - Personal project details or internal URLs
 - Anything from `~/.claude/projects/` (auto memory is local-only)
 - Private `.env` files or secrets of any kind
+- Real names, emails, or employer-specific trust prose in `config/settings.json` — the Auto Mode `environment` array ships with placeholders inside an `--- identity block start ---` / `--- identity block end ---` marker pair. Real identity lives in `$CLAUDE_DIR/identity.json` (gitignored) and is spliced in by `install.sh`. See "Identity" below.
+
+## Identity
+
+`config/settings.json` ships identity-neutral. Per-target identity (name, email, optional org prose, optional `[includeIf]` git block) is configured by `make set-identity`, which writes `$CLAUDE_DIR/identity.json` — a gitignored file under the *deploy* target, not the repo. `install.sh` re-applies the overlay on every run by splicing `environment_extras` between the markers in `settings.json`. Source of truth lives outside the repo; the repo only holds placeholders.
+
+To revert a target to placeholders: `make unset-identity` (deletes `identity.json` and re-runs install with `FORCE_UPDATE=1`).
 
 ## Deployment
 
@@ -35,6 +42,7 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 | `config/agents/*.md` | `~/.claude/agents/` | Agent definitions |
 | `skills/*/SKILL.md` | `~/.claude/commands/*/SKILL.md` | Slash command skills |
 | `hooks/*` | `~/.claude/hooks/` | Event hooks (made executable) |
+| `scripts/set-identity.sh` | (invoked, not deployed) | Interactive setup for `$CLAUDE_DIR/identity.json` |
 | `config/statusline/` | `~/.claude/statusline/` | Statusline config |
 | `templates/cuj-template.md` | (manual copy) | CUJ document template |
 | `templates/ad-template.md` | (manual copy) | Architecture Decision Record template |
