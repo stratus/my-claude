@@ -9,7 +9,7 @@
 
 CLAUDE_TARGETS ?= ~/.claude
 
-.PHONY: all help install clean set-identity unset-identity
+.PHONY: all help install clean set-identity unset-identity unset-git-identity reset-all-identity
 
 all: install
 	@echo ""
@@ -23,10 +23,12 @@ help:
 	@echo "Targets:"
 	@echo "  all              - Run full installation (default)"
 	@echo "  install          - Deploy configuration to target directories"
-	@echo "  set-identity     - Configure git name/email + Auto Mode identity per target"
-	@echo "  unset-identity   - Remove identity overlay and revert settings.json placeholders"
-	@echo "  clean            - Remove deployed configuration"
-	@echo "  help             - Show this help message"
+	@echo "  set-identity        - Configure git name/email + Auto Mode identity per target"
+	@echo "  unset-identity      - Remove identity overlay and revert settings.json placeholders"
+	@echo "  unset-git-identity  - Remove the [includeIf] stanzas this tooling wrote to ~/.gitconfig"
+	@echo "  reset-all-identity  - Full revert: unset-git-identity + unset-identity"
+	@echo "  clean               - Remove deployed configuration"
+	@echo "  help                - Show this help message"
 	@echo ""
 	@echo "Variables:"
 	@echo "  CLAUDE_TARGETS  - Space-separated install dirs (default: ~/.claude)"
@@ -50,6 +52,15 @@ unset-identity:
 		echo "✅ Removed identity overlay for $$target"; \
 	done
 	@FORCE_UPDATE=1 $(MAKE) install
+
+unset-git-identity:
+	@for target in $(CLAUDE_TARGETS); do \
+		CLAUDE_DIR="$$target" ./scripts/unset-git-identity.sh; \
+	done
+
+reset-all-identity: unset-git-identity unset-identity
+	@echo ""
+	@echo "✅ Identity fully reset for $(CLAUDE_TARGETS)"
 
 clean:
 	@for target in $(CLAUDE_TARGETS); do \
