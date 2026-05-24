@@ -9,7 +9,7 @@
 
 CLAUDE_TARGETS ?= ~/.claude
 
-.PHONY: all help install clean
+.PHONY: all help install clean set-identity unset-identity
 
 all: install
 	@echo ""
@@ -21,10 +21,12 @@ help:
 	@echo "Usage: make [target] [CLAUDE_TARGETS='~/.claude ~/.claude-corp']"
 	@echo ""
 	@echo "Targets:"
-	@echo "  all      - Run full installation (default)"
-	@echo "  install  - Deploy configuration to target directories"
-	@echo "  clean    - Remove deployed configuration"
-	@echo "  help     - Show this help message"
+	@echo "  all              - Run full installation (default)"
+	@echo "  install          - Deploy configuration to target directories"
+	@echo "  set-identity     - Configure git name/email + Auto Mode identity per target"
+	@echo "  unset-identity   - Remove identity overlay and revert settings.json placeholders"
+	@echo "  clean            - Remove deployed configuration"
+	@echo "  help             - Show this help message"
 	@echo ""
 	@echo "Variables:"
 	@echo "  CLAUDE_TARGETS  - Space-separated install dirs (default: ~/.claude)"
@@ -36,6 +38,18 @@ install:
 		echo "🤖 Installing my-claude configuration to $$target..."; \
 		CLAUDE_DIR="$$target" ./install.sh; \
 	done
+
+set-identity:
+	@for target in $(CLAUDE_TARGETS); do \
+		CLAUDE_DIR="$$target" ./scripts/set-identity.sh; \
+	done
+
+unset-identity:
+	@for target in $(CLAUDE_TARGETS); do \
+		rm -f "$$target/identity.json"; \
+		echo "✅ Removed identity overlay for $$target"; \
+	done
+	@FORCE_UPDATE=1 $(MAKE) install
 
 clean:
 	@for target in $(CLAUDE_TARGETS); do \

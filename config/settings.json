@@ -239,9 +239,11 @@
   "autoMode": {
     "environment": [
       "$defaults",
-      "Developer: Gustavo Franco (gfranco@nvidia.com), individual developer, primary use: software development across many languages and frameworks (Go, Python, TypeScript, Rust, Ansible).",
-      "Source control: github.com under user 'gfranco' and any NVIDIA org (github.com/NVIDIA, github.com/nvidia, etc.). PRs and pushes to feature branches are routine; pushing to main/master/production/release is not.",
-      "Internal NVIDIA domains: *.nvidia.com, *.nvda.ai, nvidia.atlassian.net, *.s8k.io, pbss.s8k.io — trusted for read and write. Anthropic, Claude, and learning sites (claude.com, anthropic.com, docs.anthropic.com, nvacademy.dev) are trusted reads.",
+      "--- identity block start (managed by make set-identity) ---",
+      "Developer: $USER (identity not configured), individual developer, primary use: software development. Identity can be customized via `make set-identity`.",
+      "Source control: feature-branch pushes and PRs via 'gh pr create' are routine; pushing to main/master/production/release is not.",
+      "Trusted external sources: claude.com, anthropic.com, docs.anthropic.com, github.com, pypi.org, registry.npmjs.org, crates.io, proxy.golang.org, sum.golang.org, repo1.maven.org — trusted for read.",
+      "--- identity block end ---",
       "Cloud and package registries: pypi.org, files.pythonhosted.org, registry.npmjs.org, proxy.golang.org, sum.golang.org, crates.io, repo1.maven.org, github.com release assets — trusted for dependency installs.",
       "Trusted local tooling: docker, gh CLI, ansible, molecule, uv, pytest, vitest, jest, cargo, go, npm, pnpm, yarn, ruff, mypy, black, golangci-lint, eslint, prettier — running them against this repo or any sub-project is routine.",
       "Boundary: any production deploy, force push to main/master/production/release, write to ~/.ssh/, ~/.aws/, ~/.gnupg/, mass deletion of files that existed before the session, or modification of shared infrastructure is NOT trusted regardless of source."

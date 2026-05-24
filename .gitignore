@@ -16,3 +16,8 @@
 projects/
 memory/
 review-markers/
+
+# Per-target identity overlays — never committed (live in $CLAUDE_DIR, not the repo)
+identity.json
+**/identity.json
+.gitconfig.d/

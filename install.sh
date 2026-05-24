@@ -93,6 +93,63 @@ if [ "$CLAUDE_DIR" != "$HOME/.claude" ] && [ -f "$CLAUDE_DIR/settings.json" ]; t
     sed -i '' "s|~/.claude/|${claude_dir_tilde}/|g" "$CLAUDE_DIR/settings.json"
 fi
 
+# Apply per-target identity overlay (if present) — runs unconditionally so the
+# placeholder block in settings.json is always replaced when an overlay exists,
+# regardless of whether copy_if_missing overwrote the file. Must run AFTER the
+# path-rewrite above so user-typed `~/.claude/` references in overlay prose
+# aren't mangled.
+if [ -f "$CLAUDE_DIR/identity.json" ] && [ -f "$CLAUDE_DIR/settings.json" ]; then
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo "  ⚠️  python3 not found — skipping identity overlay (install Xcode CLT then re-run)"
+    else
+        echo "  🪪 Applying identity overlay from identity.json"
+        # Build the replacement block on stdout, one JSON array string per line,
+        # using the same 6-space indent as the surrounding "environment" array.
+        overlay_block="$(python3 - "$CLAUDE_DIR/identity.json" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
+    ident = json.load(f)
+lines = ident.get("environment_extras", [])
+if not lines:
+    name = ident.get("name", "")
+    email = ident.get("email", "")
+    lines = [f"Developer: {name} ({email}), individual developer."]
+indent = "      "
+print("\n".join(f'{indent}{json.dumps(line)},' for line in lines))
+PYEOF
+)"
+        # Write block to temp file, then use awk to splice it between markers.
+        tmp_dir="${TMPDIR:-/tmp}"
+        tmp_block="$tmp_dir/my-claude-identity-block.$$"
+        tmp_out="$tmp_dir/my-claude-settings.$$"
+        trap 'rm -f "$tmp_block" "$tmp_out"' EXIT
+        printf '%s\n' "$overlay_block" > "$tmp_block"
+        awk -v blockfile="$tmp_block" '
+            /--- identity block start \(managed by make set-identity\) ---/ {
+                print
+                while ((getline line < blockfile) > 0) print line
+                close(blockfile)
+                in_block = 1
+                next
+            }
+            /--- identity block end ---/ {
+                in_block = 0
+                print
+                next
+            }
+            !in_block { print }
+        ' "$CLAUDE_DIR/settings.json" > "$tmp_out"
+        if python3 -c "import json; json.load(open('$tmp_out'))" 2>/dev/null; then
+            mv "$tmp_out" "$CLAUDE_DIR/settings.json"
+        else
+            echo "  ❌ Overlay produced invalid JSON — keeping original settings.json" >&2
+            rm -f "$tmp_out"
+        fi
+        rm -f "$tmp_block"
+        trap - EXIT
+    fi
+fi
+
 # Install rz1989s/claude-code-statusline
 #
 # We pin to a specific upstream commit and verify its install.sh by SHA-256
