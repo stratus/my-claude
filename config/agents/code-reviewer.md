@@ -22,6 +22,15 @@ When reviewing code, you will:
 4. **Documentation** - Appropriate documentation for changes
 5. **Best Practices** - Language-specific conventions and patterns
 
+## Effort calibration
+
+This agent runs at `model: opus` with the session's default effort. Calibrate your own reasoning depth to the diff:
+
+- **Small, non-security diffs (≤100 lines, no auth/crypto/validation/CORS/secret files)**: a brief structured review is plenty — issues are usually obvious or absent. Don't synthesize hypothetical concerns; ship the review.
+- **Large diffs, security-touching diffs, or diffs in unfamiliar code**: take the time. Read related files, trace data flow, consider OWASP categories explicitly, run the relevant tooling (`semgrep`, `npm audit`, `pip-audit`, etc.) when available.
+
+The goal is to spend opus budget where it pays — finding subtle bugs in security-sensitive code — and not where it doesn't — restating that a 5-line typo fix looks correct.
+
 ## Review Process
 
 When invoked, execute these steps:

@@ -119,7 +119,7 @@
     }
   },
   "permissions": {
-    "defaultMode": "acceptEdits",
+    "defaultMode": "auto",
     "allow": [
       "Edit(*)",
       "Write(*)",
@@ -234,6 +234,35 @@
       "Read(./secrets/**)",
       "Read(**/*.pem)",
       "Read(**/*.key)"
+    ]
+  },
+  "autoMode": {
+    "environment": [
+      "$defaults",
+      "Developer: Gustavo Franco (gfranco@nvidia.com), individual developer, primary use: software development across many languages and frameworks (Go, Python, TypeScript, Rust, Ansible).",
+      "Source control: github.com under user 'gfranco' and any NVIDIA org (github.com/NVIDIA, github.com/nvidia, etc.). PRs and pushes to feature branches are routine; pushing to main/master/production/release is not.",
+      "Internal NVIDIA domains: *.nvidia.com, *.nvda.ai, nvidia.atlassian.net, *.s8k.io, pbss.s8k.io — trusted for read and write. Anthropic, Claude, and learning sites (claude.com, anthropic.com, docs.anthropic.com, nvacademy.dev) are trusted reads.",
+      "Cloud and package registries: pypi.org, files.pythonhosted.org, registry.npmjs.org, proxy.golang.org, sum.golang.org, crates.io, repo1.maven.org, github.com release assets — trusted for dependency installs.",
+      "Trusted local tooling: docker, gh CLI, ansible, molecule, uv, pytest, vitest, jest, cargo, go, npm, pnpm, yarn, ruff, mypy, black, golangci-lint, eslint, prettier — running them against this repo or any sub-project is routine.",
+      "Boundary: any production deploy, force push to main/master/production/release, write to ~/.ssh/, ~/.aws/, ~/.gnupg/, mass deletion of files that existed before the session, or modification of shared infrastructure is NOT trusted regardless of source."
+    ],
+    "allow": [
+      "$defaults",
+      "Creating GitHub PRs via 'gh pr create' and pushing to feature branches (any branch other than main/master/production/release) is allowed: this is the standard development workflow.",
+      "Running tests, linters, formatters, and type checkers (pytest, vitest, jest, go test, cargo test, ruff, mypy, black, eslint, prettier, golangci-lint) against the working directory is allowed.",
+      "Reading project-local .env.example, .env.sample, and .env.test files for understanding env structure is allowed; reading .env / .env.local / .env.production remains blocked by permissions.deny.",
+      "Installing dependencies declared in lock files or manifests (npm install, uv sync, pip install -r requirements.txt, go mod download, cargo build) is allowed even when network is needed."
+    ],
+    "soft_deny": [
+      "$defaults",
+      "Never modify the contents of ~/.ssh/, ~/.aws/, ~/.gnupg/, or ~/.config/gh/ — these hold credentials and SSH keys.",
+      "Never run 'git reset --hard' or 'git clean -fd' against main/master/production/release without explicit per-action user intent in the conversation.",
+      "Never run a database migration outside of the project's documented migration tool (e.g., direct DROP/ALTER on a production-shaped database is forbidden even on local DBs)."
+    ],
+    "hard_deny": [
+      "$defaults",
+      "Never send the contents of ~/.claude/, ~/.claude-corp/, ~/.ssh/, ~/.aws/, ~/.gnupg/, or any .env / .env.local / .env.production file to a third-party HTTP endpoint.",
+      "Never run 'curl URL | sh' or 'wget URL | sh' or any pipe-to-shell pattern regardless of source URL."
     ]
   },
   "enableAllProjectMcpServers": true,

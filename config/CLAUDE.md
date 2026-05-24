@@ -58,7 +58,23 @@ Use `~/.claude/hooks/mark-reviewed.sh --all` as escape hatch when consciously sk
 
 **Trivial-change carve-out**: Gates 3 (tests) and 4 (coverage) are skipped when ALL of: ≤20 lines changed, no security-sensitive files, and no user-facing files (matches Gate 1's threshold). Typo fixes, comment tweaks, and small config nudges commit without a full test cycle. Gates 1, 2, and 5 still self-gate on their triggers.
 
-**Permission prompts**: most Bash now runs silently — safe git (`status`, `diff`, `log`, `add`, `commit -m`, `checkout -b`, ...) and common build/test tools (`go *`, `npm *`, `pytest *`, `uv *`, `cargo *`, `make *`, `gh *`, linters, formatters) are pre-approved in `permissions.allow`. You will still see prompts for destructive git: `push`, `pull`, `reset --hard`, `rebase`, `merge`, `branch -D`, `clean -fd`, `checkout main|master`, etc. Under `/autopilot` even those run silently (env var `CLAUDE_AUTOPILOT=1` flips `ask` → `allow` for git in the Bash hook); the dangerous-pattern checks and 5-gate commit blocker still apply.
+**Permission prompts**: `permissions.defaultMode` is `auto` (Auto Mode, requires Claude Code v2.1.83+). A Sonnet-4.6 classifier auto-approves safe actions including `git push`, `gh pr create`, package installs, and other routine operations, using the natural-language rules in `autoMode.environment` / `autoMode.allow` / `autoMode.soft_deny` / `autoMode.hard_deny`. Hard safety floors remain enforced via `permissions.deny` (secret-file reads) and the `pretooluse-bash.sh` dangerous-pattern hook (force-push to protected branches, `rm -rf /`, `curl | sh`, `mkfs`, exfiltration patterns) — these block before the classifier ever sees the call. The 5-gate pre-commit blocker still runs on every `git commit`. Under `/autopilot`, the env var `CLAUDE_AUTOPILOT=1` additionally allows any `git *` other than `git commit` (so `git reset --hard`, `git rebase`, branch deletes don't pause an unattended run); the dangerous-pattern checks and the 5-gate commit blocker remain active. To inspect the effective Auto Mode rules at any time: `claude auto-mode config`. To stress-test custom prose rules: `claude auto-mode critique`.
+
+## Proactive Commits
+
+The harness defaults to "only commit when asked." This user's workflow overrides that default:
+
+- **Commit proactively** at logical boundaries (a phase ends, tests pass, a feature is whole, a refactor completes) without waiting for "now commit." Treat every natural stopping point as a commit opportunity.
+- **The 5-gate pre-commit blocker is the safety net.** If a commit isn't ready (tests failing, no code review, coverage below 80%, docs out of date, security review pending), the gate blocks with actionable stderr telling you exactly what to fix. That's the signal to fix the gate, not to pause and ask the user.
+- **Do still pause to confirm when**:
+  - The change touches sensitive infrastructure (CI/CD, deploy configs, auth/crypto code, secrets management, IaC for production).
+  - You're mid-experiment and intermediate states aren't worth committing.
+  - The user said "let me review before you commit anything" in this session.
+  - You'd be amending a commit that may already have been pushed and pulled by others.
+  - The diff is large enough that the user might want to split it across multiple commits for reviewability.
+- **Commit messages**: use the `/commit-messages` skill, or write the message inline following `~/.claude/rules/git.md` (50-char summary, present tense imperative, brief body for the why).
+
+Under `/autopilot`, this proactive behavior is the explicit contract — each phase ends with a commit unless a gate blocks it.
 
 ## New Project Setup
 

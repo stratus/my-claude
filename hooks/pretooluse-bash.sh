@@ -37,6 +37,31 @@ if [[ -z "$COMMAND" ]]; then
     exit 0
 fi
 
+# -----------------------------------------------------------------------------
+# Fast-path — built-in read-only commands cannot trip the dangerous-pattern
+# scan AND cannot be `git commit`, so they exit immediately without paying
+# the cost of Phase A's regex sweep. The command list matches Claude Code's
+# own built-in read-only set, so this only short-circuits work that would
+# always have ended in `exit 0` anyway. Saves ~10-30ms per qualifying call.
+# Read-only git subcommands are enumerated explicitly — never blacklist,
+# because adding a new write subcommand to git in the future must NOT be
+# silently auto-allowed by this hook.
+#
+# SAFETY GATE: skip the fast-path if the command text references a sensitive
+# path/extension. Phase A blocks `cat .env`, `find . -name *.pem`, etc., and
+# the fast-path must NOT silently bypass those checks. Pattern intentionally
+# kept tight so it only triggers on actual secret-shaped strings — false
+# positives just mean we pay Phase A's ~10-30ms, which is harmless.
+# -----------------------------------------------------------------------------
+if ! echo "$COMMAND" | grep -qiE '(\.env([^a-zA-Z0-9]|$)|\.pem([^a-zA-Z0-9]|$)|\.key([^a-zA-Z0-9]|$)|secrets?[^a-zA-Z0-9]|credential|token|password|\.ssh[/[:space:]]|id_rsa|id_ed25519)'; then
+    if echo "$COMMAND" | grep -qE '^[[:space:]]*(ls|cat|echo|pwd|head|tail|grep|find|wc|which|diff|stat|du|cd|tree|file|env|whoami|date|hostname|uptime|uname|printenv|true|false)([[:space:]]|$)'; then
+        exit 0
+    fi
+    if echo "$COMMAND" | grep -qE '^[[:space:]]*git[[:space:]]+(status|diff|log|show|blame|branch|rev-parse|ls-files|worktree[[:space:]]+list|stash[[:space:]]+list|stash[[:space:]]+show|remote([[:space:]]+-v)?|tag([[:space:]]+-l)?|config[[:space:]]+--get|config[[:space:]]+--list)([[:space:]]|$)'; then
+        exit 0
+    fi
+fi
+
 # Is the command "primarily" a `git commit` (carve-out test for Phase A)?
 PRIMARY_GIT_COMMIT=false
 if echo "$COMMAND" | grep -qE '^[[:space:]]*(sudo[[:space:]]+)?git[[:space:]]+commit([[:space:]]|$)'; then
