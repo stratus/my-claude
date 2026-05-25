@@ -21,3 +21,12 @@ review-markers/
 identity.json
 **/identity.json
 .gitconfig.d/
+
+# Per-target statusline choice marker + extracted third-party source —
+# never committed (live in $CLAUDE_DIR, not the repo). Defense-in-depth:
+# the install target is normally outside the repo tree, but a developer
+# could accidentally point CLAUDE_DIR inside the repo while testing.
+statusline-choice
+**/statusline-choice
+external/
+**/external/

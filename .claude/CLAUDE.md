@@ -25,6 +25,34 @@ Three orthogonal revert paths:
 - `make unset-git-identity` — removes only the `[includeIf]` path values this tooling wrote to `~/.gitconfig` (uses `git config --unset --fixed-value` for surgical removal); deletes `$CLAUDE_DIR/.gitconfig.d/identity.inc`. Does NOT touch `identity.json`. Writes a timestamped+PID-suffixed backup of `~/.gitconfig` first.
 - `make reset-all-identity` — both of the above.
 
+## Statusline backends
+
+Two statusline backends are supported, plus a "none" option. The choice is per-target, persisted in `$CLAUDE_DIR/statusline-choice` (gitignored).
+
+| Choice | Backend | settings.json `statusLine.command` |
+|--------|---------|-----------------------------------|
+| `rz1989s` (default) | rz1989s/claude-code-statusline + local `statusline-wrapper.sh` | `bash ~/.claude/statusline/statusline-wrapper.sh` |
+| `tmck` | tmck-code/yet-another-statusline (Python entrypoint) | `python3 ~/.claude/statusline_command.py` |
+| `none` | No statusline | (key absent from settings.json) |
+
+Both backends are fetched at install time from the upstream GitHub repos, pinned to specific commits, and verified by SHA-256 before extraction. Pins live in `install.sh` (rz1989s) and `scripts/install-statusline-tmck.sh` (tmck).
+
+**Setting the choice.**
+
+- First `make install` on a new machine prompts once (interactive) and persists the answer to `~/.claude/statusline-choice`. Subsequent installs honor that marker silently.
+- `make set-statusline` (interactive) or `make set-statusline CHOICE=tmck` (non-interactive) switches the backend. This is the only path that overwrites an existing marker.
+- `STATUSLINE_CHOICE=tmck make install` overrides for **the current run only** — a bare env var does NOT rewrite the marker. This prevents a stray `export STATUSLINE_CHOICE=...` in `.zshrc` from silently laundering itself into the persisted record.
+- `make unset-statusline` deletes the marker, restores rz1989s, and optionally prompts to remove the extracted tmck source under `$CLAUDE_DIR/external/yet-another-statusline-*/`.
+
+**tmck requires Python ≥ 3.14** (stdlib-only, no venv). Preflight contract:
+
+- If `STATUSLINE_CHOICE=tmck` was set **explicitly** on this run (env or `make set-statusline tmck`) and Python is too old: hard-fail with an actionable message.
+- If the choice came from the **persisted marker** and Python is too old: log a warning and fall back to rz1989s **for this run only**. The marker is unchanged, so the next install retries tmck once Python is upgraded.
+
+**Multi-target behaviour.** The Makefile prompts once before iterating `CLAUDE_TARGETS`, so a fresh-machine `make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"` asks the question once and applies the same choice to every target. To diverge intentionally, run `make set-statusline CHOICE=tmck CLAUDE_TARGETS=~/.claude-corp` after the initial install.
+
+**Non-default targets** symlink against the primary install, mirroring the existing rz1989s pattern — one tarball extraction per pinned commit, regardless of how many targets are deployed.
+
 ## Deployment
 
 ```bash
@@ -49,7 +77,11 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 | `skills/*/SKILL.md` | `~/.claude/commands/*/SKILL.md` | Slash command skills |
 | `hooks/*` | `~/.claude/hooks/` | Event hooks (made executable) |
 | `scripts/set-identity.sh` | (invoked, not deployed) | Interactive setup for `$CLAUDE_DIR/identity.json` |
-| `config/statusline/` | `~/.claude/statusline/` | Statusline config |
+| `scripts/install-statusline-tmck.sh` | (invoked, not deployed) | Fetches + verifies + extracts tmck-code/yet-another-statusline at a pinned commit |
+| `scripts/prompt-statusline.sh` | (invoked, not deployed) | One-shot interactive chooser (rz1989s / tmck / none) |
+| `scripts/set-statusline.sh` | (invoked, not deployed) | Persists `$CLAUDE_DIR/statusline-choice` and re-runs `install.sh` |
+| `scripts/unset-statusline.sh` | (invoked, not deployed) | Removes marker + offers cleanup of extracted source; restores rz1989s |
+| `config/statusline/` | `~/.claude/statusline/` | Statusline config (rz1989s wrapper + Config.toml) |
 | `templates/cuj-template.md` | (manual copy) | CUJ document template |
 | `templates/ad-template.md` | (manual copy) | Architecture Decision Record template |
 | `templates/mcp.json.example` | (manual copy) | Recommended MCP servers for new projects |

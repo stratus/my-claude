@@ -95,6 +95,39 @@ make reset-all-identity     # both of the above
 
 `unset-git-identity` is surgical: it removes only the `path = ` values pointing at this target's `identity.inc`. Legacy `[includeIf]` stanzas under the same subsection (if you had one before) are left intact. A timestamped backup of `~/.gitconfig` is written before any mutation.
 
+## Statusline backends
+
+`make install` lets you pick one of two third-party statuslines (or none) for the Claude Code session bar. Both are fetched from upstream at install time and pinned to a reviewed commit (SHA-256 verified).
+
+| Choice | Backend | Notes |
+|--------|---------|-------|
+| `rz1989s` (default) | [rz1989s/claude-code-statusline](https://github.com/rz1989s/claude-code-statusline) | Themed multi-line wrapper, configurable via `~/.claude/statusline/Config.toml`. The repo's existing `statusline-wrapper.sh` provides corp-vs-personal `ENV_CONFIG_*` routing on top. |
+| `tmck` | [tmck-code/yet-another-statusline](https://github.com/tmck-code/yet-another-statusline) | Python entrypoint. Requires **Python ≥ 3.14** (stdlib-only — no venv or pip install). |
+| `none` | No statusline | The `statusLine` key is omitted from `settings.json`. |
+
+On the first `make install` on a new machine, the installer prompts once for the choice and persists the answer to `~/.claude/statusline-choice`. Subsequent installs honor that marker silently.
+
+To switch backends later:
+
+```bash
+make set-statusline              # interactive (rz1989s | tmck | none)
+make set-statusline CHOICE=tmck  # non-interactive
+make unset-statusline            # delete the marker, restore default (rz1989s)
+```
+
+For a one-off override that does **not** persist:
+
+```bash
+STATUSLINE_CHOICE=none make install
+```
+
+A bare env var controls the current run only — it never overwrites the persisted marker. (This prevents a stray `export STATUSLINE_CHOICE=...` in `.zshrc` from silently laundering into the marker.)
+
+**Python 3.14 fallback contract.** If you pick `tmck` and later lose Python ≥ 3.14, the next `make install`:
+
+- Hard-fails when `STATUSLINE_CHOICE=tmck` is set explicitly on the command line (you asked for it).
+- Falls back to `rz1989s` for that single run when the choice came from the persisted marker (your marker is left unchanged, so the next install retries `tmck` once Python is fixed).
+
 ## Repository Structure
 
 ```
@@ -108,7 +141,8 @@ my-claude/
 │   └── statusline/               # Statusline wrapper + Config.toml
 ├── skills/<name>/SKILL.md        # 14 slash-command skills → ~/.claude/commands/
 ├── hooks/*.sh                    # Event hooks → ~/.claude/hooks/ (chmod +x)
-├── scripts/                      # Setup helpers (set-identity.sh, etc.)
+├── scripts/                      # Setup helpers (set-identity.sh, set-statusline.sh,
+│                                 #   install-statusline-tmck.sh, prompt-statusline.sh, ...)
 ├── docs/                         # Reference docs (GUIDE.md, mcp-setup.md)
 ├── templates/                    # Project scaffolds + doc templates
 │   ├── nextjs/.claude/CLAUDE.md
@@ -119,7 +153,7 @@ my-claude/
 │   └── mcp.json.example
 ├── .claude/CLAUDE.md             # Project-local rules for editing this repo
 ├── install.sh                    # Checksum-aware deployer
-├── Makefile                      # install / clean / help
+├── Makefile                      # install / clean / help / set-identity / set-statusline / ...
 └── README.md
 ```
 
