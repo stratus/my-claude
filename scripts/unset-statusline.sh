@@ -49,6 +49,9 @@ if [ -d "$external_dir" ] && [ -n "$(find "$external_dir" -maxdepth 1 -name 'yet
 fi
 
 # Re-run install.sh so settings.json is rewritten to the default rz1989s wiring.
+# We intentionally do NOT set STATUSLINE_CHOICE_PERSIST here — the marker was
+# just deleted, so install.sh's "marker doesn't exist" branch will write the
+# new default, which is what we want.
 echo "🔄 Re-running install.sh to restore default (rz1989s)..."
 FORCE_UPDATE=1 STATUSLINE_CHOICE="rz1989s" CLAUDE_DIR="$CLAUDE_DIR" \
     "$REPO_ROOT/install.sh"

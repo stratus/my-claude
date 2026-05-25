@@ -40,7 +40,12 @@ printf '%s\n' "$choice" > "$CLAUDE_DIR/statusline-choice"
 echo "📌 Recorded statusline choice: $choice ($CLAUDE_DIR/statusline-choice)"
 
 # Re-run install.sh with FORCE_UPDATE so settings.json is rewritten and the
-# new backend is installed.
+# new backend is installed. STATUSLINE_CHOICE_PERSIST=1 tells install.sh that
+# this is an intentional persist (vs. a stray env var) and the marker file
+# should be (re)written.
 echo "🔄 Re-running install.sh to apply..."
-FORCE_UPDATE=1 STATUSLINE_CHOICE="$choice" CLAUDE_DIR="$CLAUDE_DIR" \
+FORCE_UPDATE=1 \
+    STATUSLINE_CHOICE="$choice" \
+    STATUSLINE_CHOICE_PERSIST=1 \
+    CLAUDE_DIR="$CLAUDE_DIR" \
     "$REPO_ROOT/install.sh"
