@@ -9,7 +9,7 @@
 
 CLAUDE_TARGETS ?= ~/.claude
 
-.PHONY: all help install clean set-identity unset-identity unset-git-identity reset-all-identity
+.PHONY: all help install clean set-identity unset-identity unset-git-identity reset-all-identity set-statusline unset-statusline
 
 all: install
 	@echo ""
@@ -21,24 +21,37 @@ help:
 	@echo "Usage: make [target] [CLAUDE_TARGETS='~/.claude ~/.claude-corp']"
 	@echo ""
 	@echo "Targets:"
-	@echo "  all              - Run full installation (default)"
-	@echo "  install          - Deploy configuration to target directories"
+	@echo "  all                 - Run full installation (default)"
+	@echo "  install             - Deploy configuration to target directories"
 	@echo "  set-identity        - Configure git name/email + Auto Mode identity per target"
 	@echo "  unset-identity      - Remove identity overlay and revert settings.json placeholders"
 	@echo "  unset-git-identity  - Remove the [includeIf] stanzas this tooling wrote to ~/.gitconfig"
 	@echo "  reset-all-identity  - Full revert: unset-git-identity + unset-identity"
+	@echo "  set-statusline      - Choose statusline backend (rz1989s | tmck | none); persists per target"
+	@echo "  unset-statusline    - Remove statusline-choice marker and restore default (rz1989s)"
 	@echo "  clean               - Remove deployed configuration"
 	@echo "  help                - Show this help message"
 	@echo ""
 	@echo "Variables:"
-	@echo "  CLAUDE_TARGETS  - Space-separated install dirs (default: ~/.claude)"
-	@echo "  FORCE_UPDATE    - Set to 1 to skip prompts on diverged files"
+	@echo "  CLAUDE_TARGETS       - Space-separated install dirs (default: ~/.claude)"
+	@echo "  FORCE_UPDATE         - Set to 1 to skip prompts on diverged files"
+	@echo "  STATUSLINE_CHOICE    - Override the statusline backend for this run only"
+	@echo "                         (rz1989s | tmck | none). Does NOT persist to marker"
+	@echo "                         unless set via 'make set-statusline'."
 
 install:
-	@for target in $(CLAUDE_TARGETS); do \
+	@sl="$${STATUSLINE_CHOICE:-}"; \
+	if [ -z "$$sl" ] && [ ! -f "$$HOME/.claude/statusline-choice" ]; then \
+		sl="$$(./scripts/prompt-statusline.sh)"; \
+	fi; \
+	for target in $(CLAUDE_TARGETS); do \
 		echo ""; \
 		echo "🤖 Installing my-claude configuration to $$target..."; \
-		CLAUDE_DIR="$$target" ./install.sh; \
+		if [ -n "$$sl" ]; then \
+			STATUSLINE_CHOICE="$$sl" CLAUDE_DIR="$$target" ./install.sh; \
+		else \
+			CLAUDE_DIR="$$target" ./install.sh; \
+		fi; \
 	done
 
 set-identity:
@@ -61,6 +74,19 @@ unset-git-identity:
 reset-all-identity: unset-git-identity unset-identity
 	@echo ""
 	@echo "✅ Identity fully reset for $(CLAUDE_TARGETS)"
+
+# set-statusline accepts an optional CHOICE argument:
+#   make set-statusline                  (interactive prompt)
+#   make set-statusline CHOICE=tmck      (non-interactive)
+set-statusline:
+	@for target in $(CLAUDE_TARGETS); do \
+		CLAUDE_DIR="$$target" ./scripts/set-statusline.sh $(CHOICE); \
+	done
+
+unset-statusline:
+	@for target in $(CLAUDE_TARGETS); do \
+		CLAUDE_DIR="$$target" ./scripts/unset-statusline.sh; \
+	done
 
 clean:
 	@for target in $(CLAUDE_TARGETS); do \
