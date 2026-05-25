@@ -78,14 +78,16 @@ reset-all-identity: unset-git-identity unset-identity
 # set-statusline accepts an optional CHOICE argument:
 #   make set-statusline                  (interactive prompt)
 #   make set-statusline CHOICE=tmck      (non-interactive)
+# `|| exit 1` aborts the per-target loop on invalid input so the user sees a
+# single error rather than one per target.
 set-statusline:
 	@for target in $(CLAUDE_TARGETS); do \
-		CLAUDE_DIR="$$target" ./scripts/set-statusline.sh $(CHOICE); \
+		CLAUDE_DIR="$$target" ./scripts/set-statusline.sh $(CHOICE) || exit 1; \
 	done
 
 unset-statusline:
 	@for target in $(CLAUDE_TARGETS); do \
-		CLAUDE_DIR="$$target" ./scripts/unset-statusline.sh; \
+		CLAUDE_DIR="$$target" ./scripts/unset-statusline.sh || exit 1; \
 	done
 
 clean:

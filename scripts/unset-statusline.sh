@@ -21,12 +21,19 @@ CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
 marker="$CLAUDE_DIR/statusline-choice"
 external_dir="$CLAUDE_DIR/external"
 
+# Reset the marker to the default rz1989s rather than deleting it. If we just
+# deleted, install.sh's resolution order (env > per-target marker > primary
+# marker > default) would fall through to the primary $HOME/.claude/
+# statusline-choice, which might still say tmck — meaning a subsequent bare
+# `make install` would silently reinstall tmck. Writing rz1989s explicitly to
+# the per-target marker makes "restore default" durable.
 if [ -f "$marker" ]; then
     current="$(cat "$marker")"
-    rm -f "$marker"
-    echo "🗑️  Removed statusline choice marker (was: $current)"
+    printf '%s\n' "rz1989s" > "$marker"
+    echo "🗑️  Reset statusline choice marker to rz1989s (was: $current)"
 else
-    echo "⏭️  No statusline-choice marker at $marker — nothing to remove."
+    printf '%s\n' "rz1989s" > "$marker"
+    echo "📌 Wrote default statusline choice marker: rz1989s"
 fi
 
 # Offer to clean the extracted tmck source tree (small, but symmetry with

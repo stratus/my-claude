@@ -42,7 +42,7 @@ Both backends are fetched at install time from the upstream GitHub repos, pinned
 - First `make install` on a new machine prompts once (interactive) and persists the answer to `~/.claude/statusline-choice`. Subsequent installs honor that marker silently.
 - `make set-statusline` (interactive) or `make set-statusline CHOICE=tmck` (non-interactive) switches the backend. This is the only path that overwrites an existing marker.
 - `STATUSLINE_CHOICE=tmck make install` overrides for **the current run only** — a bare env var does NOT rewrite the marker. This prevents a stray `export STATUSLINE_CHOICE=...` in `.zshrc` from silently laundering itself into the persisted record.
-- `make unset-statusline` deletes the marker, restores rz1989s, and optionally prompts to remove the extracted tmck source under `$CLAUDE_DIR/external/yet-another-statusline-*/`.
+- `make unset-statusline` resets the per-target marker to `rz1989s` (rather than deleting it — deletion would let install.sh fall through to the primary `$HOME/.claude/statusline-choice`, potentially re-pinning to tmck on the next bare install). Restores the rz1989s install, and optionally prompts to remove the extracted tmck source under `$CLAUDE_DIR/external/yet-another-statusline-*/`.
 
 **tmck requires Python ≥ 3.14** (stdlib-only, no venv). Preflight contract:
 

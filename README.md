@@ -107,26 +107,28 @@ make reset-all-identity     # both of the above
 
 On the first `make install` on a new machine, the installer prompts once for the choice and persists the answer to `~/.claude/statusline-choice`. Subsequent installs honor that marker silently.
 
-To switch backends later:
+To switch backends later — `CHOICE=` is a Makefile variable (same syntax as `CLAUDE_TARGETS=`), so it goes **after** the target:
 
 ```bash
 make set-statusline              # interactive (rz1989s | tmck | none)
 make set-statusline CHOICE=tmck  # non-interactive
-make unset-statusline            # delete the marker, restore default (rz1989s)
+make unset-statusline            # reset the per-target marker to rz1989s
 ```
 
-For a one-off override that does **not** persist:
+For a one-off override that does **not** persist — `STATUSLINE_CHOICE=` is an environment variable, so it goes **before** the command:
 
 ```bash
 STATUSLINE_CHOICE=none make install
 ```
 
-A bare env var controls the current run only — it never overwrites the persisted marker. (This prevents a stray `export STATUSLINE_CHOICE=...` in `.zshrc` from silently laundering into the marker.)
+A bare env var controls the current run only; it never overwrites the persisted marker. (This prevents a stray `export STATUSLINE_CHOICE=...` in `.zshrc` from silently laundering into the marker.) For multi-target installs (`CLAUDE_TARGETS="~/.claude ~/.claude-corp"`), the first-run prompt fires **once** and the same choice is applied to every target.
 
 **Python 3.14 fallback contract.** If you pick `tmck` and later lose Python ≥ 3.14, the next `make install`:
 
-- Hard-fails when `STATUSLINE_CHOICE=tmck` is set explicitly on the command line (you asked for it).
-- Falls back to `rz1989s` for that single run when the choice came from the persisted marker (your marker is left unchanged, so the next install retries `tmck` once Python is fixed).
+- **Hard-fails** when `STATUSLINE_CHOICE=tmck` is set explicitly on the command line (you asked for it).
+- **Falls back to `rz1989s`** when the choice came from the persisted marker. The marker is left unchanged, so the next install retries `tmck` once Python is fixed. The fallback runs the full rz1989s install — you get a working statusbar for this run, not a half-deployed wrapper.
+
+There is no `make reset-all-statusline` target (in contrast to identity's `reset-all-identity`). Statusline has no `~/.gitconfig` side effects to clean up — `make unset-statusline` covers the marker and offers cleanup of the extracted tmck source under `$CLAUDE_DIR/external/`.
 
 ## Repository Structure
 

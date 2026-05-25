@@ -54,7 +54,9 @@ EXTERNAL_DIR="$CLAUDE_DIR/external/yet-another-statusline-${SHORT_SHA}"
 
 # PRIMARY_DIR identifies the "source of truth" install for non-default targets
 # to symlink against. Defaults to ~/.claude; override only for verify-loop
-# testing against throwaway $TMPDIR roots.
+# testing against throwaway $TMPDIR roots when invoking this script directly.
+# Note: PRIMARY_DIR is NOT propagated through `make` recipes — Makefile-driven
+# tests should override $HOME instead (e.g. HOME=$TMPDIR/test-home make install).
 PRIMARY_DIR="${PRIMARY_DIR:-$HOME/.claude}"
 PRIMARY_ENTRYPOINT="$PRIMARY_DIR/statusline_command.py"
 PRIMARY_THEMES="$PRIMARY_DIR/statusline/themes.py"
@@ -105,6 +107,10 @@ if [ "$CLAUDE_DIR" != "$PRIMARY_DIR" ]; then
     fi
     echo "  📊 Linking tmck statusline from primary install (${SHORT_SHA})..."
     mkdir -p "$CLAUDE_DIR/statusline"
+    # ln -sf unlinks any pre-existing symlink at the destination rather than
+    # following it (verified on macOS/BSD and Linux/GNU). Do NOT change these
+    # to `cp -f`, which would follow a pre-existing symlink and clobber its
+    # target (potentially a system path).
     ln -sf "$PRIMARY_ENTRYPOINT" "$entrypoint_link"
     ln -sf "$PRIMARY_THEMES" "$themes_link"
     exit 0
@@ -166,6 +172,10 @@ mv "$staging_dir" "$EXTERNAL_DIR"
 # Symlink the runtime files into the locations Claude Code expects.
 # statusline_command.py loads themes.py via importlib from "./statusline/themes.py"
 # relative to its own dir, so this directory layout matches upstream.
+# ln -sf unlinks any pre-existing symlink at the destination rather than
+# following it (verified on macOS/BSD and Linux/GNU). Do NOT change these
+# to `cp -f`, which would follow a pre-existing symlink and clobber its
+# target (potentially a system path).
 ln -sf "$EXTERNAL_DIR/statusline_command.py" "$entrypoint_link"
 ln -sf "$EXTERNAL_DIR/statusline/themes.py" "$themes_link"
 

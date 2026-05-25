@@ -51,7 +51,6 @@ fi
 #   STATUSLINE_CHOICE=tmck in .zshrc does not silently rewrite the marker.
 STATUSLINE_CHOICE_EXPLICIT=0
 STATUSLINE_CHOICE_PERSIST="${STATUSLINE_CHOICE_PERSIST:-0}"
-STATUSLINE_FALLBACK=0  # flipped to 1 if tmck preflight fails and we fall back to rz1989s
 if [ -n "${STATUSLINE_CHOICE:-}" ]; then
     STATUSLINE_CHOICE_EXPLICIT=1
 elif [ -f "$CLAUDE_DIR/statusline-choice" ]; then
@@ -216,23 +215,32 @@ fi
 
 STATUSLINE_DIR="$CLAUDE_DIR/statusline"
 
-if [ "$STATUSLINE_CHOICE" = "rz1989s" ]; then
-    # Pin and verify rz1989s/claude-code-statusline. To bump the pin:
-    #   1. SHA=$(curl -sSfL https://api.github.com/repos/rz1989s/claude-code-statusline/commits/main | jq -r .sha)
-    #   2. curl -sSfL "https://raw.githubusercontent.com/rz1989s/claude-code-statusline/$SHA/install.sh" -o /tmp/sl.sh
-    #   3. shasum -a 256 /tmp/sl.sh   # paste both values below
-    STATUSLINE_COMMIT="90866b5a910236dbdd5b0298e22565a575dde6c0"
-    STATUSLINE_SHA256="fee0e745087b0a521eb9173cf98caa11e1d568aa63b1311815c402c73b22e9b0"
-    STATUSLINE_URL="https://raw.githubusercontent.com/rz1989s/claude-code-statusline/${STATUSLINE_COMMIT}/install.sh"
-    PRIMARY_STATUSLINE="$HOME/.claude/statusline/statusline.sh"
+# install_rz1989s — fetch, verify, and deploy rz1989s/claude-code-statusline.
+# Called from two sites: (a) the normal STATUSLINE_CHOICE=rz1989s path, and
+# (b) the tmck preflight-fallback path so the user gets a *working* rz1989s
+# statusbar this run (not a half-deployed wrapper pointing at a missing
+# backend). Extracted into a function so a future pin bump only edits one
+# place.
+#
+# To bump the pin:
+#   1. SHA=$(curl -sSfL https://api.github.com/repos/rz1989s/claude-code-statusline/commits/main | jq -r .sha)
+#   2. curl -sSfL "https://raw.githubusercontent.com/rz1989s/claude-code-statusline/$SHA/install.sh" -o /tmp/sl.sh
+#   3. shasum -a 256 /tmp/sl.sh   # paste both values below
+install_rz1989s() {
+    local STATUSLINE_COMMIT="90866b5a910236dbdd5b0298e22565a575dde6c0"
+    local STATUSLINE_SHA256="fee0e745087b0a521eb9173cf98caa11e1d568aa63b1311815c402c73b22e9b0"
+    local STATUSLINE_URL="https://raw.githubusercontent.com/rz1989s/claude-code-statusline/${STATUSLINE_COMMIT}/install.sh"
+    local PRIMARY_STATUSLINE="$HOME/.claude/statusline/statusline.sh"
 
     if [ ! -f "$STATUSLINE_DIR/statusline.sh" ]; then
         if [ "$CLAUDE_DIR" = "$HOME/.claude" ]; then
             # Primary target: install from upstream (pinned + checksum-verified)
             echo "  📊 Installing claude-code-statusline (pinned ${STATUSLINE_COMMIT:0:7})..."
+            local statusline_tmp
             statusline_tmp="$(mktemp)"
             trap 'rm -f "$statusline_tmp"' EXIT
             curl -sSfL "$STATUSLINE_URL" -o "$statusline_tmp"
+            local actual_sha
             actual_sha="$(shasum -a 256 "$statusline_tmp" | cut -d' ' -f1)"
             if [ "$actual_sha" != "$STATUSLINE_SHA256" ]; then
                 echo "  ❌ Statusline installer checksum mismatch — refusing to execute" >&2
@@ -244,7 +252,10 @@ if [ "$STATUSLINE_CHOICE" = "rz1989s" ]; then
             rm -f "$statusline_tmp"
             trap - EXIT
         elif [ -f "$PRIMARY_STATUSLINE" ]; then
-            # Non-default target: symlink from primary install
+            # Non-default target: symlink from primary install.
+            # ln -sf unlinks any pre-existing symlink at the destination rather
+            # than following it — so a malicious pre-existing symlink at
+            # $STATUSLINE_DIR/statusline.sh cannot redirect this write.
             echo "  📊 Linking statusline from primary install..."
             mkdir -p "$STATUSLINE_DIR"
             ln -sf "$PRIMARY_STATUSLINE" "$STATUSLINE_DIR/statusline.sh"
@@ -270,15 +281,19 @@ if [ "$STATUSLINE_CHOICE" = "rz1989s" ]; then
         cp "$CONFIG_SOURCE/statusline/statusline-wrapper.sh" "$STATUSLINE_DIR/statusline-wrapper.sh"
         chmod +x "$STATUSLINE_DIR/statusline-wrapper.sh"
     fi
+}
+
+if [ "$STATUSLINE_CHOICE" = "rz1989s" ]; then
+    install_rz1989s
 
 elif [ "$STATUSLINE_CHOICE" = "tmck" ]; then
     # Run the dedicated tmck installer. Exit 2 from that script means the
     # Python preflight failed; how we react depends on whether the user
     # explicitly asked for tmck on this run (env var or via set-statusline).
-    # On fallback, we flip STATUSLINE_CHOICE to rz1989s in-place — the
-    # settings.json splicer below honors the new value and the rz1989s
-    # backend is NOT installed in this single-run fallback path. The marker
-    # file is also left alone so the next install retries tmck.
+    # On fallback, we flip STATUSLINE_CHOICE to rz1989s in-place AND run the
+    # full rz1989s install so the user gets a working statusbar this run.
+    # The marker file is left alone so the next install retries tmck once
+    # Python is fixed.
     set +e
     "$SCRIPT_DIR/scripts/install-statusline-tmck.sh"
     tmck_rc=$?
@@ -292,27 +307,13 @@ elif [ "$STATUSLINE_CHOICE" = "tmck" ]; then
         echo "  📛 tmck preflight failed — falling back to rz1989s for this run only"
         echo "     (your statusline-choice marker is unchanged; next install retries tmck)"
         STATUSLINE_CHOICE="rz1989s"
-        STATUSLINE_FALLBACK=1
+        install_rz1989s
     elif [ "$tmck_rc" -ne 0 ]; then
         exit "$tmck_rc"
     fi
 
 elif [ "$STATUSLINE_CHOICE" = "none" ]; then
     echo "  ⏭️  statusline disabled (STATUSLINE_CHOICE=none) — no backend installed"
-fi
-
-# Fallback path: tmck preflight failed and we're substituting rz1989s. We
-# don't reinstall the rz1989s backend (that adds a network round-trip on a
-# path the user didn't ask for); we just point settings.json at the wrapper.
-# If the wrapper/Config.toml aren't on disk yet — first install with bad
-# Python — they get copied next time install.sh runs and the user fixes
-# Python. The wrapper script being missing still produces a working session
-# (Claude Code shows the path warning rather than crashing).
-if [ "$STATUSLINE_FALLBACK" -eq 1 ] && [ ! -f "$STATUSLINE_DIR/statusline-wrapper.sh" ] && [ -d "$CONFIG_SOURCE/statusline" ]; then
-    echo "  📄 Deploying minimal rz1989s wrapper for fallback"
-    mkdir -p "$STATUSLINE_DIR"
-    cp "$CONFIG_SOURCE/statusline/statusline-wrapper.sh" "$STATUSLINE_DIR/statusline-wrapper.sh"
-    chmod +x "$STATUSLINE_DIR/statusline-wrapper.sh"
 fi
 
 # ---------------------------------------------------------------------------
