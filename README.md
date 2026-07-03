@@ -16,7 +16,7 @@ This repo is the source of truth for a Claude Code setup that emphasizes:
 
 - **macOS or Linux** — installer uses BSD `sed -i ''` on macOS; pre-commit gate handles both BSD and GNU `date`.
 - **bash 4+ recommended** (bash 3.2 on macOS works but lacks some features the inner skills assume)
-- **`jq`** — required by `block-dangerous-commands.sh`, `pre-commit-gate.sh`, `notify.sh`, `after-edit.sh`
+- **`jq`** — required by `pretooluse-bash.sh`, `notify.sh`, `after-edit.sh`
 - **`python3`** — required by `block-secrets.py` (the Read/Edit/Write secrets blocker)
 - **`git`** — for the pre-commit gate's diff inspection
 - **`shasum`** — used by `install.sh` to detect drift on update (preinstalled on macOS; install via `coreutils` on Linux)
@@ -221,26 +221,26 @@ Each skill is a directory under `skills/` with a `SKILL.md`. Deployed to `~/.cla
 | `/ad` | haiku | Scaffold a new Architecture Decision Record |
 | `/remember` | haiku | Save learnings/patterns to persistent memory |
 
-## Rules (Auto-Loaded)
+## Rules
 
-Every file in `config/rules/` deploys to `~/.claude/rules/` and is loaded into every session. Split out from CLAUDE.md to keep the system prompt small while still authoritative on specific topics.
+Every file in `config/rules/` deploys to `~/.claude/rules/`. Rules **without** `paths:` frontmatter load into every session; rules **with** `paths:` load only when Claude works with matching files — that keeps the always-loaded context small. (Note: the key is `paths:`, not `globs:` — Claude Code silently ignores unknown frontmatter keys and loads the rule unconditionally.)
 
-| Rule | Topic |
-|------|-------|
-| `code-readability.md` | Naming, function size, complexity limits |
-| `cujs-and-ads.md` | CUJ/ADR conventions, opt-out, staleness |
-| `definition-of-done.md` | Per-project-type DoD checklists |
-| `documentation.md` | README requirements, the "litmus test" |
-| `ecosystem-tools.md` | When to suggest TDD Guard, Trail of Bits, claude-rules-doctor |
-| `git.md` | Commit/branch/PR conventions |
-| `design-first.md` | Elephant-Goldfish Model, Goldfish-proof docs, session recovery |
-| `karpathy-principles.md` | Surface assumptions, surgical edits, verify-loop format |
-| `languages.md` | Per-language linter/test commands |
-| `mcp-playwright.md` | Auto-suggest Playwright MCP for web projects |
-| `quality-workflow.md` | Mental model: `/plan` → `/implement` → `/polish` |
-| `remote-and-voice.md` | `/rc` and `/voice` features |
-| `security.md` | OWASP Top 10, secret hygiene, frontend security |
-| `testing.md` | 80% coverage minimum, env splitting, smoke tests |
+| Rule | Loads | Topic |
+|------|-------|-------|
+| `code-readability.md` | code files | Naming, function size, complexity limits |
+| `cujs-and-ads.md` | always | CUJ/ADR conventions, opt-out, staleness |
+| `definition-of-done.md` | always | Per-project-type DoD checklists |
+| `design-first.md` | always | Elephant-Goldfish Model, Goldfish-proof docs, session recovery |
+| `documentation.md` | `**/*.md` | README requirements, the "litmus test" |
+| `ecosystem-tools.md` | always | When to suggest TDD Guard, Trail of Bits, claude-rules-doctor |
+| `git.md` | always | Commit/branch/PR conventions |
+| `karpathy-principles.md` | always | Surface assumptions, surgical edits, verify-loop format |
+| `languages.md` | code files | Per-language linter/test commands |
+| `mcp-playwright.md` | web files | Auto-suggest Playwright MCP for web projects |
+| `security.md` | always | OWASP Top 10, secret hygiene, frontend security |
+| `testing.md` | test files | 80% coverage minimum, env splitting, smoke tests |
+
+Content that only matters at specific moments lives elsewhere, loaded on demand: the SRE reliability reference moved to `skills/plan/references/reliability.md` (used by `/plan`, `reliability-engineer`, `/ansible-audit`), the quality-workflow mental model merged into `config/CLAUDE.md`, and the `/rc` + `/voice` user reference moved to `docs/reference/remote-and-voice.md`.
 
 ## Hooks
 
@@ -248,12 +248,13 @@ Scripts in `hooks/` deploy to `~/.claude/hooks/` (made executable on install) an
 
 | Hook | Trigger | Purpose |
 |------|---------|---------|
-| `block-secrets.py` | PreToolUse (Read/Edit/Write) | Blocks access to `.env`, `.pem`, `.key`, `secrets/`, `.ssh/`, and other sensitive files |
-| `block-dangerous-commands.sh` | PreToolUse (Bash) | Blocks `rm -rf /`, force-push to main, curl-piped-to-shell, chmod 777, dd-to-disk, etc. |
-| `pre-commit-gate.sh` | PreToolUse (Bash, `git commit`) | Enforces the 5 gates |
+| `pretooluse-bash.sh` | PreToolUse (Bash) | Dangerous-pattern scan (`rm -rf /`, force-push to main, curl-piped-to-shell, etc.) + the 5-gate commit blocker + autopilot bypass |
+| `block-secrets-wrapper.sh` → `block-secrets.py` | PreToolUse (Edit/Write) | Blocks writes to `.env`, `.pem`, `.key`, `secrets/`, `.ssh/`, and other sensitive files |
 | `after-edit.sh` | PostToolUse (Edit/Write) | Runs formatters/linters (gofmt, prettier, ruff, etc.) |
-| `end-of-turn.sh` | Stop | Non-blocking quality reminders (lint, typecheck, format, secret-scan) |
 | `notify.sh` | Notification | macOS / Linux / WSL desktop notifications |
+| `session-start-prune-markers.sh` | SessionStart (startup) | Deletes review markers older than 1h to prevent stale-marker confusion |
+| `log-skill-usage.sh` | UserPromptExpansion | One-line TSV log for the long-running workflow skills |
+| `pre-compact-snapshot.sh` | PreCompact (manual/auto) | Snapshots branch, HEAD, staged files, and latest plan before compaction |
 | `mark-reviewed.sh` | Manual | Sets review markers (called by agents and as escape hatch) |
 
 ## Templates
@@ -272,6 +273,16 @@ Stack scaffolds and documentation templates under `templates/`.
 ```bash
 cp -r ~/my-claude/templates/nextjs/.claude ~/your-project/
 ```
+
+## CI & Tests
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push and PR:
+
+- **shellcheck** (error severity) on `hooks/`, `scripts/`, and `install.sh`
+- **`scripts/check-config.sh`** — settings.json validity + identity placeholders, rules use `paths:` (never `globs:`), skills/agents have required frontmatter, documented agent/skill counts match the filesystem
+- **bats** tests in `tests/` for `pretooluse-bash.sh` — dangerous-pattern blocks, autopilot bypass, and all 5 pre-commit gates
+
+Run locally: `bash scripts/check-config.sh` and (with bats installed) `bats tests/`.
 
 ## MCP Servers
 

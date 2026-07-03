@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  shellcheck:
+    name: Shellcheck (error severity)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shellcheck hooks, scripts, installer
+        run: |
+          shellcheck --version
+          shellcheck -S error hooks/*.sh scripts/*.sh install.sh
+
+  config-checks:
+    name: Config consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate settings.json, frontmatter, documented counts
+        run: bash scripts/check-config.sh
+
+  hook-tests:
+    name: Hook tests (bats)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install bats
+        run: sudo apt-get update -q && sudo apt-get install -y -q bats jq
+      - name: Run pretooluse-bash tests
+        run: bats tests/

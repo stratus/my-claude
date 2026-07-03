@@ -88,6 +88,10 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 
 ## Conventions
 
+### Rules loading
+- Rules in `config/rules/` use `paths:` frontmatter (official key) to scope loading to matching files; rules without `paths:` load into every session. **Never use `globs:`** — Claude Code silently ignores unknown keys and loads the rule unconditionally. `scripts/check-config.sh` (and CI) enforce this.
+- On-demand references live outside `rules/`: SRE reliability material is at `skills/plan/references/reliability.md`.
+
 ### Skills (14 total)
 - One directory per skill under `skills/`
 - Must have `SKILL.md` with YAML frontmatter (`name`, `description`, `model`)
@@ -99,6 +103,7 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 
 ### Agents (12 total)
 - Markdown files in `config/agents/` with frontmatter: `model`, `tools`, `maxTurns`, `color`
+- code-reviewer, security-analyst, and debug-specialist carry `memory: local` — persistent per-project agent memory under `.claude/agent-memory-local/<name>/`, never committed
 - Core workflow: code-reviewer → security-analyst → docs-updater
 - Quality specialists: integration-tester, cuj-verifier, architect-reviewer (opus), reliability-engineer (opus), ux-reviewer
 - Stack specialists: react-frontend, python-backend, ansible-engineer, debug-specialist
@@ -142,8 +147,11 @@ Under `/autopilot`, the env var `CLAUDE_AUTOPILOT=1` is exported. The `pretoolus
 ## Testing Changes
 
 After modifying any config:
-1. Run `make install` to deploy
-2. Start a new `claude` session to pick up changes
-3. Verify the change takes effect (skills appear in `/help`, agents load, etc.)
+1. Run `bash scripts/check-config.sh` — validates settings.json, rules/skills/agents frontmatter, and documented counts
+2. Run `make install` to deploy
+3. Start a new `claude` session to pick up changes
+4. Verify the change takes effect (skills appear in `/help`, agents load, etc.)
+
+CI (`.github/workflows/ci.yml`) runs on every push: shellcheck (error severity) on hooks/scripts/installer, `scripts/check-config.sh`, and the bats suite in `tests/` covering `pretooluse-bash.sh` (dangerous patterns, autopilot bypass, all 5 gates, trivial carve-out).
 
 For CLAUDE.md changes: the file is loaded into every session's system prompt. Check that instructions are clear and unambiguous.
