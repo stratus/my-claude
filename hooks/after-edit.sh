@@ -6,7 +6,8 @@
 # This hook runs AFTER Claude edits or writes a file.
 # Use it for fast operations like formatting that should run immediately.
 #
-# For heavier checks (tests, full linting), use the end-of-turn (Stop) hook.
+# For heavier checks (tests, full linting), run them explicitly or wire a
+# Stop hook (an archived example lives in templates/hooks/end-of-turn.sh.disabled).
 #
 # Usage:
 #   Add to ~/.claude/settings.json:

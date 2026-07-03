@@ -46,6 +46,7 @@ fi
 # ---------------------------------------------------------------------------
 # 2. Rules frontmatter — `paths:` or nothing; never `globs:`
 # ---------------------------------------------------------------------------
+RULE_FAILS=$FAILURES
 for rule in config/rules/*.md; do
     if grep -q '^globs:' "$rule"; then
         fail "$rule uses 'globs:' — Claude Code ignores unknown keys and loads the rule unconditionally; use 'paths:'"
@@ -54,7 +55,7 @@ for rule in config/rules/*.md; do
         fail "$rule has no 'description:' frontmatter"
     fi
 done
-[ "$FAILURES" -eq 0 ] && ok "rules: no globs:, all have descriptions"
+[ "$FAILURES" -eq "$RULE_FAILS" ] && ok "rules: no globs:, all have descriptions"
 
 # ---------------------------------------------------------------------------
 # 3. Skills frontmatter
@@ -85,6 +86,7 @@ done
 # ---------------------------------------------------------------------------
 # 5. Count drift — documented counts must match the filesystem
 # ---------------------------------------------------------------------------
+COUNT_FAILS=$FAILURES
 N_AGENTS=$(find config/agents -name '*.md' | wc -l | tr -d ' ')
 N_SKILLS=$(find skills -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
 
@@ -106,7 +108,7 @@ for pattern_file in .claude/CLAUDE.md; do
         fail "$pattern_file claims $claim skills but there are $N_SKILLS"
     fi
 done
-ok "counts: $N_AGENTS agents, $N_SKILLS skills (documented claims checked)"
+[ "$FAILURES" -eq "$COUNT_FAILS" ] && ok "counts: $N_AGENTS agents, $N_SKILLS skills (documented claims checked)"
 
 # ---------------------------------------------------------------------------
 echo ""
