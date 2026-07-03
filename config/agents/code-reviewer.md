@@ -5,6 +5,7 @@ model: opus
 color: blue
 tools: Read, Glob, Grep, Bash
 maxTurns: 20
+memory: local
 skills:
   - security-audit
 ---
@@ -35,15 +36,15 @@ The goal is to spend opus budget where it pays — finding subtle bugs in securi
 
 When invoked, execute these steps:
 
-### 0. Check Project Memory
+### 0. Check Memory
 
-Before reviewing, check if there are project-specific lessons from prior sessions:
+You have persistent agent memory (auto-injected above from `.claude/agent-memory-local/code-reviewer/MEMORY.md`). Before reviewing, apply any recorded anti-patterns, known issues, and past review findings as **additional review criteria** specific to this project. For example, if memory says "never mock the database in this project," flag any new database mocks.
+
+Also check the session-level auto memory for `feedback` entries:
 
 ```bash
 ls ~/.claude/projects/*/memory/*.md 2>/dev/null | head -5
 ```
-
-If memory files exist for the current project, scan them for `feedback` entries — especially anti-patterns, known issues, and past review findings. Apply these as **additional review criteria** specific to this project. For example, if memory says "never mock the database in this project," flag any new database mocks.
 
 ### 1. Identify Changes
 ```bash
@@ -285,3 +286,5 @@ When your review is complete and you have reported all findings, run these comma
 Replace `<percentage>` with the actual integer coverage percentage from Step 3 (e.g., `--coverage 85`).
 
 These markers are time-limited (10 minutes) and allow the pre-commit quality gate to pass. Without them, `git commit` will be blocked.
+
+**Then update your agent memory** with recurring issues, project conventions, and review findings you'd want the next review to already know. Write concise notes about what you found and where — this builds institutional knowledge across conversations.
