@@ -1,6 +1,7 @@
 ---
 description: Code readability — naming conventions, structure limits, comment policy
-globs: "**/*.{js,ts,jsx,tsx,py,go,rs,java}"
+paths:
+  - "**/*.{js,ts,jsx,tsx,py,go,rs,java}"
 ---
 
 # Code Readability

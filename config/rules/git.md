@@ -1,6 +1,5 @@
 ---
 description: Git standards — commit format, branch naming, PR guidelines
-globs: "**/*"
 ---
 
 # Git Standards

@@ -1,6 +1,5 @@
 ---
 description: Security standards — mandatory review areas, OWASP prevention, best practices
-globs: "**/*"
 ---
 
 # Security Standards

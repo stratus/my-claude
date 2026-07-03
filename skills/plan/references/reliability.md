@@ -1,14 +1,11 @@
----
-description: Reliability engineering standards — SLOs, failure modes, observability, rollback, capacity. Adapted from Google SRE Book/Workbook and Release It! (Nygard).
-globs: "**/*"
----
-
 # Reliability Standards
 
 A change isn't done when it works on the happy path. It's done when you know how it
-fails, how you'll see the failure, and how you'll get back to working. This rule
+fails, how you'll see the failure, and how you'll get back to working. This reference
 distills Google's SRE Book / SRE Workbook, Nygard's *Release It!*, and Beyer's
 *Implementing Service Level Objectives* into a planning lens applied at `/plan` time.
+It loads on demand (from the `/plan` skill, the `reliability-engineer` agent, and
+`/ansible-audit`) rather than into every session.
 
 See also: `rules/security.md` (security review areas), `rules/testing.md` (test
 pyramid and integration tests at real boundaries), `rules/definition-of-done.md`
@@ -96,7 +93,7 @@ Apply during `/plan` Step 4. A plan that can't tick these doesn't go to `/implem
 
 ---
 
-## When This Rule Doesn't Apply
+## When This Doesn't Apply
 
 Reliability is judgment-heavy, not binary. For internal tools, prototypes, scripts,
 and config repos with no production runtime, most of this is overkill. The

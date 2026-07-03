@@ -299,7 +299,7 @@ find . -path '*/roles/*' -maxdepth 3 -type d -print0 \
 
 **Severity:** Repo without README explaining run = **High**. Role without README = **Medium**. Missing `requirements.yml` when roles depend on external collections = **High**.
 
-#### 3.12 Reliability (light pass — see `~/.claude/rules/reliability.md`)
+#### 3.12 Reliability (light pass — see `~/.claude/commands/plan/references/reliability.md`)
 
 **Pass criteria:**
 - Long-running tasks (`shell` running >30s, `package` install loops, service waits) use `async:` + `poll:` or have `timeout:` set

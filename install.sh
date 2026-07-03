@@ -382,6 +382,24 @@ if [ -d "$CONFIG_SOURCE/rules" ] && [ "$(ls -A "$CONFIG_SOURCE/rules" 2>/dev/nul
     done
 fi
 
+# ---------------------------------------------------------------------------
+# Remove files this repo used to deploy but no longer does. copy_if_missing
+# never deletes, so without this list a renamed or deleted rule lingers in
+# $CLAUDE_DIR forever — and rules keep loading into every session.
+# ---------------------------------------------------------------------------
+STALE_FILES=(
+    "rules/quality-workflow.md"    # merged into CLAUDE.md
+    "rules/remote-and-voice.md"    # moved to repo docs/reference/
+    "rules/reliability.md"         # moved to commands/plan/references/
+    "hooks/end-of-turn.sh"         # unwired stub, deleted from repo
+)
+for stale in "${STALE_FILES[@]}"; do
+    if [ -f "$CLAUDE_DIR/$stale" ]; then
+        echo "  🧹 Removing stale $stale"
+        rm -f "$CLAUDE_DIR/$stale"
+    fi
+done
+
 # Deploy agents
 echo ""
 echo "  🤖 Setting up agents..."

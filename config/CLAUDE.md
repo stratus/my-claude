@@ -124,9 +124,9 @@ Before implementing any feature, confirm:
 
 **Skip agents** for trivial changes (<20 lines, non-security, no user-facing impact).
 
-Most agents are dispatched automatically by `/audit` and `/polish` — you rarely need to invoke them directly.
+Most agents are dispatched automatically by `/audit` (read-only health check → report) and `/polish` (fixes findings, walks the DoD, scores release readiness, saves learnings) — you rarely need to invoke them directly.
 
-**Simple workflow**: `/plan` → `/implement` → `/polish`. Everything else is automatic.
+**Simple workflow**: `/plan` → `/implement` → `/polish`. Everything else (agents, markers, gates, learnings) is automatic.
 (`/plan` recommends `/egm` to Goldfish-test the design doc before `/implement` begins.)
 
 **Hands-off workflow**: `/plan` → accept the autopilot offer → `/autopilot <slug>`. Autopilot runs every phase, dispatches review agents, commits per phase, runs `/polish --non-interactive`, and stops only on hard failures (hook exit 2, sandbox/network deny, or a test that fails twice after `debug-specialist`). Soft ambiguity is auto-resolved with rationale logged to a journal at `~/.claude/plans/<slug>.autopilot.md`.

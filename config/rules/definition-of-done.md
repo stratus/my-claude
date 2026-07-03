@@ -1,6 +1,5 @@
 ---
 description: Definition of Done checklists — verify before marking any task complete
-globs: "**/*"
 ---
 
 # Definition of Done

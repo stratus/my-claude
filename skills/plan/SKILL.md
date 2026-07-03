@@ -110,7 +110,8 @@ one-line skip clause directly into the plan output:
 > "Reliability pass skipped: <reason>"
 
 This forces the skip to be visible in the plan doc rather than silent. See
-`rules/reliability.md` for the SRE distillation the agent applies.
+`references/reliability.md` (in this skill's directory) for the SRE distillation
+the agent applies.
 
 ### 4. Review Checklist
 For each phase, verify:
@@ -120,7 +121,7 @@ For each phase, verify:
 - [ ] Respects accepted Architecture Decisions
 - [ ] Documentation updates identified
 - [ ] CUJ impacts assessed (new CUJ needed? existing CUJ to update?)
-- [ ] Reliability concerns assessed (SLOs, failure modes, observability, rollback) — see `rules/reliability.md`
+- [ ] Reliability concerns assessed (SLOs, failure modes, observability, rollback) — see `references/reliability.md`
 - [ ] Can be demoed/verified independently
 
 ### 5. Session Recovery Block

@@ -1,6 +1,7 @@
 ---
 description: Documentation standards — README requirements, litmus test, update policy
-globs: "**/*.md"
+paths:
+  - "**/*.md"
 ---
 
 # Documentation Standards

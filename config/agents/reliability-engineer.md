@@ -49,7 +49,7 @@ the codebase. If neither, ask the user what to review.
 
 ### 2. Apply the SRE planning lens
 
-Walk the **Reliability Checklist for Plans** from `~/.claude/rules/reliability.md`
+Walk the **Reliability Checklist for Plans** from `~/.claude/commands/plan/references/reliability.md`
 against the artifact. For each item, classify the plan as:
 - **Met** — explicitly addressed in the design
 - **Partial** — mentioned but underspecified

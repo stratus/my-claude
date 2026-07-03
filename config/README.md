@@ -9,8 +9,8 @@ This is the deployed `~/.claude/` configuration — auto-generated from the `my-
 | `CLAUDE.md` | Top-level instructions loaded into every session — short, points at `rules/` |
 | `PERMISSIONS-GUIDE.md` | Sandbox, permission allow/deny semantics |
 | `settings.json` | Hooks, permissions, sandbox config |
-| `rules/` | Auto-loaded rule files (testing, security, git, languages, etc.) |
-| `agents/` | 10 specialized sub-agents |
+| `rules/` | Rule files — always-loaded unless scoped with `paths:` frontmatter (testing, security, git, languages, etc.) |
+| `agents/` | 12 specialized sub-agents |
 | `commands/` | Slash-command skills (`/plan`, `/implement`, `/polish`, …) |
 | `hooks/` | Event hooks (pre-commit gate, dangerous-command blocker, formatters) |
 | `statusline/` | Statusline binary + Config.toml + wrapper |
@@ -49,7 +49,7 @@ The installer compares each file by SHA-256 and prompts before overwriting local
 - **Machine-specific overrides**: edit files in `~/.claude/` directly. `make install` will detect divergence and prompt.
 - **New agent**: add `~/.claude/agents/<name>.md` with frontmatter (`model`, `tools`, `maxTurns`). Reference it as the `subagent_type` when dispatching the Agent tool.
 - **New skill**: create `~/.claude/commands/<name>/SKILL.md` with `name`, `description`, `model` frontmatter. Trigger with `/<name>`.
-- **New rule**: drop a `.md` file in `~/.claude/rules/`. Auto-loaded on session start.
+- **New rule**: drop a `.md` file in `~/.claude/rules/`. Loads on session start unless you scope it with `paths:` frontmatter (then it loads only when Claude reads matching files).
 
 To contribute changes back, edit the corresponding source file in `~/my-claude/config/` and commit there — `make install` round-trips them.
 

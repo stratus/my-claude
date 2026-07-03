@@ -1,6 +1,10 @@
 ---
 description: Testing standards — coverage requirements, test types, quality gates, anti-patterns, advanced techniques
-globs: "**/*.{test,spec}.*"
+paths:
+  - "**/*.{test,spec}.*"
+  - "**/test_*.py"
+  - "**/tests/**"
+  - "**/*_test.go"
 ---
 
 # Testing Standards

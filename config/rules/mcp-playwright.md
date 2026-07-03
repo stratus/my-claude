@@ -1,3 +1,14 @@
+---
+description: Suggest Playwright MCP for web projects that are missing it
+paths:
+  - "**/*.{html,tsx,jsx,vue,svelte}"
+  - "**/package.json"
+  - "**/next.config.*"
+  - "**/vite.config.*"
+  - "**/nuxt.config.*"
+  - "**/angular.json"
+---
+
 # Playwright MCP for Web Projects
 
 ## When to Check

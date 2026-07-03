@@ -1,6 +1,7 @@
 ---
 description: Language-specific linters, test commands, and CI requirements
-globs: "**/*.{js,ts,jsx,tsx,py,go,rs,java}"
+paths:
+  - "**/*.{js,ts,jsx,tsx,py,go,rs,java}"
 ---
 
 # Language Quick Reference
