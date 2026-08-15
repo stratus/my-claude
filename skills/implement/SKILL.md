@@ -30,6 +30,18 @@ Before writing code, verify:
 
 If any are missing, ask the user before proceeding.
 
+**Goldfish verdict (non-blocking).** When implementing from a plan file, grep it for a
+`## Goldfish Verdict` block written by `/egm`:
+
+- `Result: PASS` → proceed silently.
+- `Result: NEEDS REVISION` → surface the listed gaps and confirm the user still wants to
+  proceed.
+- No block, and the plan touches >3 files → mention **once** that the plan hasn't been
+  Goldfish-checked and offer `/egm <slug>`, then continue either way.
+
+Warn at most once per session, and never block on it — this mirrors the non-blocking
+CUJ/AD staleness warnings rather than the 5 blocking pre-commit gates.
+
 ### 1b. CUJ-Driven Acceptance Criteria
 
 Check if `docs/cujs/` exists and is not opted out. If CUJs exist:

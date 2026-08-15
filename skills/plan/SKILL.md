@@ -137,24 +137,34 @@ reconstructing intent from conversation history:
 - Resume by: running /implement with this doc
 ```
 
-### 6. Goldfish Test
-
-After writing the plan, instruct the user to run `/egm` to verify the document is
-Goldfish-proof — that a blank-slate session reading only this doc could reconstruct and
-execute the plan. `/egm` is a separate skill the user runs; this step does not invoke it.
-
-Do not start `/implement` until the user confirms `/egm` passed, or explicitly waives
-the check for a simple task.
-
 ## Output
 
 Present the plan and ask: "Does this plan look right? Should I adjust anything before we start Phase 1?"
 
 Do NOT start implementation until the user approves.
 
+### 6. Offer the Goldfish Test
+
+Once the user approves the plan, ask via `AskUserQuestion` — do **not** merely suggest
+`/egm` in prose. Advisory prose was the previous design here and it never fired; the
+`AskUserQuestion` + literal-dispatch pattern in step 7 is the one that works.
+
+Skip this step entirely for plans touching ≤3 files — the check costs more than it saves
+on small work.
+
+> **Question**: "Run the Goldfish check on this plan before implementing?"
+> **Options**:
+> - `Run /egm` — "Verify a blank-slate session could execute this doc from the writing alone."
+> - `Skip` — "Simple enough to implement directly; waive the check."
+
+If the user picks `Run /egm`, **emit the literal text `/egm <slug>` as your final message
+and stop** — same dispatch discipline as step 7 below.
+
+If the user picks `Skip`, continue to step 7.
+
 ### 7. Offer Autopilot
 
-Once the user approves the plan, ask via `AskUserQuestion`:
+Once the plan is approved (and the Goldfish step above is resolved), ask via `AskUserQuestion`:
 
 > **Question**: "Plan saved to `~/.claude/plans/<slug>.md`. Run autopilot to execute it unattended?"
 > **Options**:

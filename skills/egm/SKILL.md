@@ -1,6 +1,6 @@
 ---
 name: egm
-description: Run the Goldfish Protocol — test a design doc's completeness by verifying a fresh session can reconstruct the plan from it alone. Use after /plan, before /implement, on any complex feature.
+description: Use when the user asks to "check the plan", "goldfish test", "is this design doc complete", or before implementing — verifies a fresh session could rebuild the plan from the doc alone.
 model: opus
 argument-hint: "[path/to/design-doc.md or inline description]"
 ---
@@ -76,7 +76,24 @@ Verdict: GOLDFISH-PROOF ✓ — ready for /implement
       or NEEDS REVISION ✗ — return to /plan to address gaps above
 ```
 
-### Step 5 — Next Step
+### Step 5 — Record the Verdict
+
+When the checked document is a plan file, append (or replace, if one exists) a
+`## Goldfish Verdict` block at the end of that file:
+
+```
+## Goldfish Verdict
+- Result: PASS | NEEDS REVISION
+- Checked: YYYY-MM-DD
+- Gaps: [one line each, or "none"]
+```
+
+This makes the result durable state rather than conversation history — the same
+reasoning behind the Session Recovery block in `rules/design-first.md`. `/implement`
+reads this block, so a verdict recorded here survives a context reset or a fresh
+session picking the plan up later.
+
+### Step 6 — Next Step
 
 - If GOLDFISH-PROOF: report the verdict — if this is part of a plan-implement cycle, the user can proceed to `/implement`
 - If NEEDS REVISION: list the specific gaps and suggest returning to `/plan`
