@@ -26,12 +26,12 @@ set -uo pipefail
 
 payload="$(cat)"
 
-# --- one jq call, newline-separated ---------------------------------------
-# Eight subprocesses per refresh would be wasteful at refreshInterval=5;
+# --- one jq call, one field per line ---------------------------------------
+# Eight subprocesses per refresh would be wasteful at refreshInterval=5, so
 # extract everything in a single pass. `// 0` guards both a null field and a
-# null parent object, since jq traverses null without erroring. Every field
-# emits a non-empty sentinel: `read` collapses adjacent delimiters and drops
-# trailing empties, which would silently shift every later field.
+# null parent object, since jq traverses null without erroring. Fields are read
+# positionally by `mapfile`, so every one must emit exactly one non-empty line —
+# an empty or newline-bearing value shifts every field after it.
 mapfile -t _f < <(printf '%s' "$payload" | jq -r '
   # num accepts a JSON number OR a numeric string, so a future payload that
   # ships percentages as strings still reads correctly instead of silently
