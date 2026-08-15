@@ -137,7 +137,66 @@ copy_if_missing() {
 copy_if_missing "$CONFIG_SOURCE/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
 copy_if_missing "$CONFIG_SOURCE/PERMISSIONS-GUIDE.md" "$CLAUDE_DIR/PERMISSIONS-GUIDE.md"
 copy_if_missing "$CONFIG_SOURCE/README.md" "$CLAUDE_DIR/README.md"
+
+# Snapshot live skillOverrides BEFORE the copy — copy_if_missing is a whole-file
+# `cp`, not a merge, so FORCE_UPDATE=1 would otherwise discard visibility settings
+# for skills this repo does not own (externally provisioned skills under
+# $CLAUDE_DIR/skills/, synced claude.ai skills, anything toggled via /skills).
+# Losing those silently re-enables every one of them, which blows the skill-listing
+# budget and degrades routing for the skills that should trigger.
+LIVE_SKILL_OVERRIDES=""
+if [ -f "$CLAUDE_DIR/settings.json" ] && command -v python3 >/dev/null 2>&1; then
+    LIVE_SKILL_OVERRIDES="$(python3 -c '
+import json, sys
+try:
+    with open(sys.argv[1]) as fh:
+        print(json.dumps(json.load(fh).get("skillOverrides", {})))
+except Exception:
+    print("{}")
+' "$CLAUDE_DIR/settings.json" 2>/dev/null || echo '{}')"
+fi
+
 copy_if_missing "$CONFIG_SOURCE/settings.json" "$CLAUDE_DIR/settings.json"
+
+# Re-merge the live skillOverrides captured above. Repo-owned entries win (so the
+# repo stays the source of truth for its own skills); every other key is carried
+# forward from the deployed file. Runs unconditionally, like the path-rewrite and
+# identity overlay below, so it repairs the file whether or not the copy fired.
+if [ -n "$LIVE_SKILL_OVERRIDES" ] && [ -f "$CLAUDE_DIR/settings.json" ] && command -v python3 >/dev/null 2>&1; then
+    tmp_merged="$CLAUDE_DIR/settings.json.merge.$$"
+    if python3 -c '
+import json, sys
+settings_path, live_json, repo_skills_dir = sys.argv[1], sys.argv[2], sys.argv[3]
+import os
+
+with open(settings_path) as fh:
+    settings = json.load(fh)
+
+live = json.loads(live_json)
+repo_owned = {
+    name for name in os.listdir(repo_skills_dir)
+    if os.path.isfile(os.path.join(repo_skills_dir, name, "SKILL.md"))
+} if os.path.isdir(repo_skills_dir) else set()
+
+merged = {k: v for k, v in live.items() if k not in repo_owned}
+merged.update(settings.get("skillOverrides", {}))
+if merged:
+    settings["skillOverrides"] = dict(sorted(merged.items()))
+    kept = sorted(k for k in merged if k not in repo_owned)
+    if kept:
+        print("  🧩 Preserved skillOverrides for %d non-repo skill(s)" % len(kept),
+              file=sys.stderr)
+
+with open(sys.argv[4], "w") as fh:
+    json.dump(settings, fh, indent=2)
+    fh.write("\n")
+' "$CLAUDE_DIR/settings.json" "$LIVE_SKILL_OVERRIDES" "$SCRIPT_DIR/skills" "$tmp_merged"; then
+        mv "$tmp_merged" "$CLAUDE_DIR/settings.json"
+    else
+        echo "  ❌ skillOverrides merge failed — keeping settings.json as copied" >&2
+        rm -f "$tmp_merged"
+    fi
+fi
 
 # Rewrite ~/.claude/ paths in settings.json for non-default targets
 if [ "$CLAUDE_DIR" != "$HOME/.claude" ] && [ -f "$CLAUDE_DIR/settings.json" ]; then
@@ -392,6 +451,7 @@ STALE_FILES=(
     "rules/remote-and-voice.md"    # moved to repo docs/reference/
     "rules/reliability.md"         # moved to commands/plan/references/
     "hooks/end-of-turn.sh"         # unwired stub, deleted from repo
+    "rules/ecosystem-tools.md"     # always-loaded rule → README "Ecosystem" section
 )
 for stale in "${STALE_FILES[@]}"; do
     if [ -f "$CLAUDE_DIR/$stale" ]; then
