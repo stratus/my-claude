@@ -78,13 +78,16 @@ if ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3,14) else 1)' 2
 fi
 
 # ---------------------------------------------------------------------------
-# Idempotency: if BOTH symlinks already point at the pinned commit's tree, skip.
-# Checking both links protects against partial-install states where one was
-# manually deleted or where a previous run failed between the two ln -sf calls.
+# Idempotency: if BOTH symlinks already point at the pinned commit's tree AND
+# their targets actually resolve to existing files, skip. The `-e` test follows
+# symlinks, so a dangling link (e.g. after $CLAUDE_DIR/external/ was wiped by
+# `unset-statusline`'s cleanup) correctly falls through to re-extract instead
+# of self-perpetuating a broken install.
 # ---------------------------------------------------------------------------
 entrypoint_link="$CLAUDE_DIR/statusline_command.py"
 themes_link="$CLAUDE_DIR/statusline/themes.py"
-if [ -L "$entrypoint_link" ] && [ -L "$themes_link" ]; then
+if [ -L "$entrypoint_link" ] && [ -L "$themes_link" ] && \
+   [ -e "$entrypoint_link" ] && [ -e "$themes_link" ]; then
     ep_target="$(readlink "$entrypoint_link")"
     th_target="$(readlink "$themes_link")"
     case "$ep_target:$th_target" in

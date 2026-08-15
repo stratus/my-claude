@@ -13,9 +13,18 @@
 
 set -euo pipefail
 
-if [ ! -t 0 ] || [ ! -t 1 ]; then
-    # Non-interactive shell — caller didn't pre-set STATUSLINE_CHOICE.
-    # Fall back to the default without trying to read from a closed tty.
+# Gate on whether /dev/tty actually opens. `make` recipes run with stdin
+# attached to /dev/null, so a naive `[ -t 0 ]` check would always trip and
+# silently pick the default even when a controlling terminal is right there
+# (the bug this guards against: bare `make set-statusline` showed no prompt
+# and quietly re-selected rz1989s). The stat-level `[ -r /dev/tty ]` test
+# isn't sufficient either — on macOS it can return true while open(2) still
+# returns ENXIO ("Device not configured") for daemonised/sandboxed shells.
+# So we do a real probe: try to open the tty in a subshell. If that
+# succeeds, the prompt below will work.
+if ! (exec 3<>/dev/tty) 2>/dev/null; then
+    # Truly non-interactive (CI, piped script, no controlling terminal) —
+    # fall back to the default rather than blocking on a tty that isn't there.
     echo "rz1989s"
     exit 0
 fi

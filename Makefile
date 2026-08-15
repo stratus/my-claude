@@ -76,13 +76,21 @@ reset-all-identity: unset-git-identity unset-identity
 	@echo "✅ Identity fully reset for $(CLAUDE_TARGETS)"
 
 # set-statusline accepts an optional CHOICE argument:
-#   make set-statusline                  (interactive prompt)
+#   make set-statusline                  (interactive prompt — asked once, applied to all targets)
 #   make set-statusline CHOICE=tmck      (non-interactive)
+# The prompt runs once *before* the per-target loop so multi-target invocations
+# (e.g. CLAUDE_TARGETS='~/.claude ~/.claude-corp') don't ask the same question
+# N times. To diverge intentionally, run set-statusline twice with different
+# CHOICE= and CLAUDE_TARGETS= values.
 # `|| exit 1` aborts the per-target loop on invalid input so the user sees a
 # single error rather than one per target.
 set-statusline:
-	@for target in $(CLAUDE_TARGETS); do \
-		CLAUDE_DIR="$$target" ./scripts/set-statusline.sh $(CHOICE) || exit 1; \
+	@sl="$(CHOICE)"; \
+	if [ -z "$$sl" ]; then \
+		sl="$$(./scripts/prompt-statusline.sh)"; \
+	fi; \
+	for target in $(CLAUDE_TARGETS); do \
+		CLAUDE_DIR="$$target" ./scripts/set-statusline.sh "$$sl" || exit 1; \
 	done
 
 unset-statusline:
