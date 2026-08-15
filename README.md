@@ -95,40 +95,33 @@ make reset-all-identity     # both of the above
 
 `unset-git-identity` is surgical: it removes only the `path = ` values pointing at this target's `identity.inc`. Legacy `[includeIf]` stanzas under the same subsection (if you had one before) are left intact. A timestamped backup of `~/.gitconfig` is written before any mutation.
 
-## Statusline backends
+## Statusline
 
-`make install` lets you pick one of two third-party statuslines (or none) for the Claude Code session bar. Both are fetched from upstream at install time and pinned to a reviewed commit (SHA-256 verified).
+`config/statusline/statusline.sh` renders the session bar. It is **exactly two lines, always** — a fixed height that never grows with activity:
 
-| Choice | Backend | Notes |
-|--------|---------|-------|
-| `rz1989s` (default) | [rz1989s/claude-code-statusline](https://github.com/rz1989s/claude-code-statusline) | Themed multi-line wrapper, configurable via `~/.claude/statusline/Config.toml`. The repo's existing `statusline-wrapper.sh` provides corp-vs-personal `ENV_CONFIG_*` routing on top. |
-| `tmck` | [tmck-code/yet-another-statusline](https://github.com/tmck-code/yet-another-statusline) | Python entrypoint. Requires **Python ≥ 3.14** (stdlib-only — no venv or pip install). |
-| `none` | No statusline | The `statusLine` key is omitted from `settings.json`. |
-
-On the first `make install` on a new machine, the installer prompts once for the choice and persists the answer to `~/.claude/statusline-choice`. Subsequent installs honor that marker silently.
-
-To switch backends later — `CHOICE=` is a Makefile variable (same syntax as `CLAUDE_TARGETS=`), so it goes **after** the target:
-
-```bash
-make set-statusline              # interactive (rz1989s | tmck | none)
-make set-statusline CHOICE=tmck  # non-interactive
-make unset-statusline            # reset the per-target marker to rz1989s
+```
+ ~/d/s/my-claude  main*  Opus 5 · high
+ ctx ████░░░░░░ 38%  |  5h 23%  |  7d 41%
 ```
 
-For a one-off override that does **not** persist — `STATUSLINE_CHOICE=` is an environment variable, so it goes **before** the command:
+Line 1 is orientation (abbreviated cwd, git branch + `*` when dirty, model, effort level). Line 2 is budget: context-window usage, then the 5-hour and 7-day rate-limit headroom.
 
-```bash
-STATUSLINE_CHOICE=none make install
+Under `~/claude-corp/` (API-billed) line 2 swaps the rate limits for session cost and elapsed time, since cost is the number that's real on an API account and `rate_limits` isn't reported there:
+
+```
+ ~/c/acme-svc  main*  Opus 5 · high
+ ctx ████░░░░░░ 38%  |  $1.23  |  12m
 ```
 
-A bare env var controls the current run only; it never overwrites the persisted marker. (This prevents a stray `export STATUSLINE_CHOICE=...` in `.zshrc` from silently laundering into the marker.) For multi-target installs (`CLAUDE_TARGETS="~/.claude ~/.claude-corp"`), the first-run prompt fires **once** and the same choice is applied to every target.
+There is nothing to configure and no backend to choose — `make install` deploys the script and points `settings.json` at it. To change what's displayed, edit the script.
 
-**Python 3.14 fallback contract.** If you pick `tmck` and later lose Python ≥ 3.14, the next `make install`:
+**Why this repo owns its statusline.** Claude Code's payload now ships pre-calculated `context_window.used_percentage` and a `rate_limits` object. Statuslines historically parsed the transcript JSONL to *estimate* token usage, which is why the popular projects run to thousands of lines and carry a Node, Python, or Rust runtime dependency. That work is now a field read, so a ~150-line `bash` + `jq` script covers it with no pinned commit, no checksum verification, and no network fetch at install time.
 
-- **Hard-fails** when `STATUSLINE_CHOICE=tmck` is set explicitly on the command line (you asked for it).
-- **Falls back to `rz1989s`** when the choice came from the persisted marker. The marker is left unchanged, so the next install retries `tmck` once Python is fixed. The fallback runs the full rz1989s install — you get a working statusbar for this run, not a half-deployed wrapper.
+This replaced a third-party backend that rendered a boxed dashboard reaching **15 terminal rows** whenever subagents were running — six of them pure box-drawing. Its height was hardcoded in Python with no config knob.
 
-There is no `make reset-all-statusline` target (in contrast to identity's `reset-all-identity`). Statusline has no `~/.gitconfig` side effects to clean up — `make unset-statusline` covers the marker and offers cleanup of the extracted tmck source under `$CLAUDE_DIR/external/`.
+**Requirements:** `jq` (present on macOS by default at `/usr/bin/jq`). If `jq` is missing the bar degrades to placeholder values rather than failing.
+
+**Guardrails.** `scripts/check-config.sh` asserts the script exists, is executable, parses, renders exactly two lines for empty/null/malformed payloads, and is what `settings.json` actually points at. `tests/statusline.bats` covers field extraction, the corp/personal split, git state, hostile input, and width fitting from 120 down to 40 columns. Both run in CI.
 
 ## Repository Structure
 
@@ -140,11 +133,11 @@ my-claude/
 │   ├── settings.json             # Hooks, permissions, sandbox config
 │   ├── rules/*.md                # Auto-loaded rule files
 │   ├── agents/*.md               # 12 sub-agent definitions
-│   └── statusline/               # Statusline wrapper + Config.toml
+│   └── statusline/statusline.sh  # The 2-line session bar
 ├── skills/<name>/SKILL.md        # 14 slash-command skills → ~/.claude/commands/
 ├── hooks/*.sh                    # Event hooks → ~/.claude/hooks/ (chmod +x)
-├── scripts/                      # Setup helpers (set-identity.sh, set-statusline.sh,
-│                                 #   install-statusline-tmck.sh, prompt-statusline.sh, ...)
+├── scripts/                      # Setup helpers (set-identity.sh, check-config.sh, ...)
+├── tests/*.bats                  # bats suites for hooks + statusline
 ├── docs/                         # Reference docs (GUIDE.md, mcp-setup.md)
 ├── templates/                    # Project scaffolds + doc templates
 │   ├── nextjs/.claude/CLAUDE.md
@@ -155,7 +148,7 @@ my-claude/
 │   └── mcp.json.example
 ├── .claude/CLAUDE.md             # Project-local rules for editing this repo
 ├── install.sh                    # Checksum-aware deployer
-├── Makefile                      # install / clean / help / set-identity / set-statusline / ...
+├── Makefile                      # install / clean / help / set-identity / ...
 └── README.md
 ```
 

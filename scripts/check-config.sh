@@ -10,6 +10,9 @@
 #   3. every skill has name/description/model frontmatter
 #   4. every agent has model/tools/maxTurns frontmatter
 #   5. documented agent/skill counts match reality (READMEs drift otherwise)
+#   6. skill descriptions stay within the shared skill-listing budget
+#   7. the statusline script is deployable, parses, renders exactly 2 lines,
+#      and is what settings.json actually points at
 #
 # Exit 0 = all checks pass; exit 1 = at least one failure (all are reported).
 # =============================================================================
@@ -221,6 +224,61 @@ PY
         ok "skill listing: $b_total/$SKILL_BUDGET_MAX chars ($b_count listed, $b_skip excluded)"
 else
     ok "skill listing: skipped (python3 not found)"
+fi
+
+# ---------------------------------------------------------------------------
+# 7. statusline — deployable, syntactically valid, and wired in settings.json.
+# Nothing else validates this: a broken statusline fails silently (Claude Code
+# just renders nothing), and a settings.json pointing at a path we no longer
+# ship would leave every new install with no bar at all.
+# ---------------------------------------------------------------------------
+SL="config/statusline/statusline.sh"
+if [ ! -f "$SL" ]; then
+    fail "$SL is missing — settings.json statusLine points at a file this repo does not ship"
+else
+    if [ -x "$SL" ]; then
+        ok "statusline script is executable"
+    else
+        fail "$SL is not executable (chmod +x)"
+    fi
+
+    if bash -n "$SL" 2>/dev/null; then
+        ok "statusline script parses"
+    else
+        fail "$SL has a syntax error"
+    fi
+
+    # The bar must be exactly two lines for ANY payload, including the degenerate
+    # ones (`{}` early in a session, null context_window right after /compact).
+    # Height regression is the specific failure that motivated this script.
+    if command -v jq >/dev/null 2>&1; then
+        sl_bad=""
+        for probe in '{}' '{"context_window":null,"rate_limits":null}' 'not json'; do
+            n=$(printf '%s' "$probe" | bash "$SL" 2>/dev/null | wc -l | tr -d ' ')
+            [ "$n" = "2" ] || sl_bad="$sl_bad '$probe'->${n}L"
+        done
+        if [ -n "$sl_bad" ]; then
+            fail "statusline must emit exactly 2 lines for every payload; got:$sl_bad"
+        else
+            ok "statusline emits exactly 2 lines (including empty/null/malformed payloads)"
+        fi
+    else
+        ok "statusline line-count check: skipped (jq not found)"
+    fi
+fi
+
+if command -v python3 >/dev/null 2>&1; then
+    sl_cmd=$(python3 -c "
+import json
+print(json.load(open('config/settings.json')).get('statusLine', {}).get('command', ''))
+" 2>/dev/null)
+    case "$sl_cmd" in
+        *statusline/statusline.sh) ok "settings.json statusLine points at the shipped script" ;;
+        "") fail "settings.json has no statusLine.command (or python3 could not read it)" ;;
+        *)  fail "settings.json statusLine.command ('$sl_cmd') does not point at statusline/statusline.sh" ;;
+    esac
+else
+    ok "settings.json statusLine wiring: skipped (python3 not found)"
 fi
 
 # ---------------------------------------------------------------------------

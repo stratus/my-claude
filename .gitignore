@@ -24,10 +24,10 @@ identity.json
 **/identity.json
 .gitconfig.d/
 
-# Per-target statusline choice marker + extracted third-party source —
-# never committed (live in $CLAUDE_DIR, not the repo). Defense-in-depth:
-# the install target is normally outside the repo tree, but a developer
-# could accidentally point CLAUDE_DIR inside the repo while testing.
+# Leftovers from the removed third-party statusline backends. The repo no
+# longer writes either, but a developer with an older deploy target could
+# still have them on disk — and the install target is normally outside the
+# repo tree, though CLAUDE_DIR could be pointed inside it while testing.
 statusline-choice
 **/statusline-choice
 external/

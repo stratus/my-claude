@@ -19,7 +19,7 @@ CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
 CONFIG_SOURCE="$SCRIPT_DIR/config"
 
 # Tildified form of $CLAUDE_DIR used by the settings.json sed rewrite and the
-# new statusLine Python splicer. Computed once here so both code paths share
+# statusLine Python splicer. Computed once here so both code paths share
 # the value and the path-rewrite logic stays consistent.
 if [ "$CLAUDE_DIR" = "$HOME/.claude" ]; then
     CLAUDE_DIR_TILDE="~/.claude"
@@ -27,51 +27,7 @@ else
     CLAUDE_DIR_TILDE="${CLAUDE_DIR/#$HOME/\~}"
 fi
 
-# ---------------------------------------------------------------------------
-# Resolve statusline backend choice: env var > per-target marker > primary
-# marker > default rz1989s. install.sh does NOT prompt — that responsibility
-# lives in the Makefile `install` target so multi-target runs ask once, not
-# once per target.
-#
-# Two booleans:
-#   STATUSLINE_CHOICE_EXPLICIT: the user named the choice on THIS run (env
-#     var or persisted marker — anything not the default). Controls whether
-#     preflight failure for tmck is hard-fail or silent fallback.
-#   STATUSLINE_CHOICE_PERSIST: caller explicitly wants the marker rewritten
-#     this run. Set by set-statusline.sh, NOT by a bare env var. Prevents a
-#     stray STATUSLINE_CHOICE=tmck in .zshrc from laundering itself into
-#     the persisted marker on every install.
-# ---------------------------------------------------------------------------
-# STATUSLINE_CHOICE_EXPLICIT: 1 only when the choice came from an env var on
-#   THIS run (signals "user is actively asking for this right now"). Drives
-#   the preflight-fallback contract: explicit-env tmck hard-fails on bad
-#   Python; marker-derived tmck falls back to rz1989s for this run only.
-# STATUSLINE_CHOICE_PERSIST: 1 only when the caller (set-statusline.sh)
-#   asked us to rewrite the marker. NOT set by a bare env var, so a stray
-#   STATUSLINE_CHOICE=tmck in .zshrc does not silently rewrite the marker.
-STATUSLINE_CHOICE_EXPLICIT=0
-STATUSLINE_CHOICE_PERSIST="${STATUSLINE_CHOICE_PERSIST:-0}"
-if [ -n "${STATUSLINE_CHOICE:-}" ]; then
-    STATUSLINE_CHOICE_EXPLICIT=1
-elif [ -f "$CLAUDE_DIR/statusline-choice" ]; then
-    STATUSLINE_CHOICE="$(cat "$CLAUDE_DIR/statusline-choice")"
-elif [ -f "$HOME/.claude/statusline-choice" ]; then
-    STATUSLINE_CHOICE="$(cat "$HOME/.claude/statusline-choice")"
-else
-    STATUSLINE_CHOICE="rz1989s"
-fi
-case "$STATUSLINE_CHOICE" in
-    rz1989s|tmck|none) ;;
-    *)
-        echo "  ⚠️  Unknown STATUSLINE_CHOICE='$STATUSLINE_CHOICE' — falling back to rz1989s"
-        STATUSLINE_CHOICE="rz1989s"
-        STATUSLINE_CHOICE_EXPLICIT=0
-        STATUSLINE_CHOICE_PERSIST=0
-        ;;
-esac
-
 echo "🤖 Installing my-claude configuration..."
-echo "   statusline: $STATUSLINE_CHOICE"
 echo ""
 
 # Create .claude directory structure
@@ -289,158 +245,88 @@ PYEOF
     fi
 fi
 
-# Install the chosen statusline backend.
+# Deploy the statusline.
 #
-# Three backends are supported, selected by $STATUSLINE_CHOICE (resolved above):
-#   - rz1989s: themed multi-line wrapper-fronted backend (the default)
-#   - tmck:    Python entrypoint from tmck-code/yet-another-statusline
-#   - none:    no statusline (statusLine key omitted from settings.json)
+# This repo owns its statusline outright: a small bash+jq script with no
+# upstream pin, no checksum verification, and no network fetch. It replaces the
+# former rz1989s/tmck/none backend switcher, which shipped ~2800 lines of
+# vendored code to render a bar that grew to 15 terminal rows.
 #
-# Each backend's installation lives in its own block. The settings.json
-# splicer further below points statusLine.command at the right entrypoint.
+# The script reads the native context_window / rate_limits payload fields, so
+# there is nothing to keep in sync with an upstream project.
 
 STATUSLINE_DIR="$CLAUDE_DIR/statusline"
 
-# install_rz1989s — fetch, verify, and deploy rz1989s/claude-code-statusline.
-# Called from two sites: (a) the normal STATUSLINE_CHOICE=rz1989s path, and
-# (b) the tmck preflight-fallback path so the user gets a *working* rz1989s
-# statusbar this run (not a half-deployed wrapper pointing at a missing
-# backend). Extracted into a function so a future pin bump only edits one
-# place.
-#
-# To bump the pin:
-#   1. SHA=$(curl -sSfL https://api.github.com/repos/rz1989s/claude-code-statusline/commits/main | jq -r .sha)
-#   2. curl -sSfL "https://raw.githubusercontent.com/rz1989s/claude-code-statusline/$SHA/install.sh" -o /tmp/sl.sh
-#   3. shasum -a 256 /tmp/sl.sh   # paste both values below
-install_rz1989s() {
-    local STATUSLINE_COMMIT="90866b5a910236dbdd5b0298e22565a575dde6c0"
-    local STATUSLINE_SHA256="fee0e745087b0a521eb9173cf98caa11e1d568aa63b1311815c402c73b22e9b0"
-    local STATUSLINE_URL="https://raw.githubusercontent.com/rz1989s/claude-code-statusline/${STATUSLINE_COMMIT}/install.sh"
-    local PRIMARY_STATUSLINE="$HOME/.claude/statusline/statusline.sh"
+if [ -f "$CONFIG_SOURCE/statusline/statusline.sh" ]; then
+    mkdir -p "$STATUSLINE_DIR"
+    # Always overwritten: this is routing logic, not user-tunable config.
+    echo "  📊 Deploying statusline.sh"
+    cp "$CONFIG_SOURCE/statusline/statusline.sh" "$STATUSLINE_DIR/statusline.sh"
+    chmod +x "$STATUSLINE_DIR/statusline.sh"
+fi
 
-    if [ ! -f "$STATUSLINE_DIR/statusline.sh" ]; then
-        if [ "$CLAUDE_DIR" = "$HOME/.claude" ]; then
-            # Primary target: install from upstream (pinned + checksum-verified)
-            echo "  📊 Installing claude-code-statusline (pinned ${STATUSLINE_COMMIT:0:7})..."
-            local statusline_tmp
-            statusline_tmp="$(mktemp)"
-            trap 'rm -f "$statusline_tmp"' EXIT
-            curl -sSfL "$STATUSLINE_URL" -o "$statusline_tmp"
-            local actual_sha
-            actual_sha="$(shasum -a 256 "$statusline_tmp" | cut -d' ' -f1)"
-            if [ "$actual_sha" != "$STATUSLINE_SHA256" ]; then
-                echo "  ❌ Statusline installer checksum mismatch — refusing to execute" >&2
-                echo "     expected: $STATUSLINE_SHA256" >&2
-                echo "     actual:   $actual_sha" >&2
-                exit 1
-            fi
-            bash "$statusline_tmp" --preserve-statusline
-            rm -f "$statusline_tmp"
-            trap - EXIT
-        elif [ -f "$PRIMARY_STATUSLINE" ]; then
-            # Non-default target: symlink from primary install.
-            # ln -sf unlinks any pre-existing symlink at the destination rather
-            # than following it — so a malicious pre-existing symlink at
-            # $STATUSLINE_DIR/statusline.sh cannot redirect this write.
-            echo "  📊 Linking statusline from primary install..."
-            mkdir -p "$STATUSLINE_DIR"
-            ln -sf "$PRIMARY_STATUSLINE" "$STATUSLINE_DIR/statusline.sh"
-            # Also link supporting files (lib/, examples/, version.txt)
-            for item in lib examples version.txt; do
-                if [ -e "$HOME/.claude/statusline/$item" ]; then
-                    ln -sf "$HOME/.claude/statusline/$item" "$STATUSLINE_DIR/$item"
-                fi
-            done
-        else
-            echo "  ⚠️  Statusline not available — install to ~/.claude first, then re-run"
-        fi
-    else
-        echo "  ⏭️  claude-code-statusline already installed"
+# ---------------------------------------------------------------------------
+# Report leftovers from the removed backends. These live in the deploy target,
+# not the repo, and deleting a user's files without asking is not this
+# script's job — so print the exact commands and let the user run them.
+# ---------------------------------------------------------------------------
+stale_found=0
+stale_report() {
+    if [ "$stale_found" -eq 0 ]; then
+        echo ""
+        echo "  🧹 Leftovers from the previous statusline backends were found."
+        echo "     They are inert (nothing references them). To reclaim the space:"
+        echo ""
+        stale_found=1
     fi
-
-    # Deploy statusline config and wrapper (rz1989s only — tmck does not use the wrapper)
-    if [ -d "$CONFIG_SOURCE/statusline" ]; then
-        mkdir -p "$STATUSLINE_DIR"
-        copy_if_missing "$CONFIG_SOURCE/statusline/Config.toml" "$STATUSLINE_DIR/Config.toml"
-        # Always update wrapper (it's the routing logic, not user-customizable)
-        echo "  📄 Deploying statusline-wrapper.sh"
-        cp "$CONFIG_SOURCE/statusline/statusline-wrapper.sh" "$STATUSLINE_DIR/statusline-wrapper.sh"
-        chmod +x "$STATUSLINE_DIR/statusline-wrapper.sh"
-    fi
+    echo "       rm -rf $1"
 }
-
-if [ "$STATUSLINE_CHOICE" = "rz1989s" ]; then
-    install_rz1989s
-
-elif [ "$STATUSLINE_CHOICE" = "tmck" ]; then
-    # Run the dedicated tmck installer. Exit 2 from that script means the
-    # Python preflight failed; how we react depends on whether the user
-    # explicitly asked for tmck on this run (env var or via set-statusline).
-    # On fallback, we flip STATUSLINE_CHOICE to rz1989s in-place AND run the
-    # full rz1989s install so the user gets a working statusbar this run.
-    # The marker file is left alone so the next install retries tmck once
-    # Python is fixed.
-    set +e
-    "$SCRIPT_DIR/scripts/install-statusline-tmck.sh"
-    tmck_rc=$?
-    set -e
-    if [ "$tmck_rc" -eq 2 ]; then
-        if [ "$STATUSLINE_CHOICE_EXPLICIT" -eq 1 ]; then
-            echo "  ❌ tmck statusline preflight failed and STATUSLINE_CHOICE=tmck was explicit" >&2
-            echo "     Install Python 3.14+ then re-run, or pick rz1989s." >&2
-            exit 1
-        fi
-        echo "  📛 tmck preflight failed — falling back to rz1989s for this run only"
-        echo "     (your statusline-choice marker is unchanged; next install retries tmck)"
-        STATUSLINE_CHOICE="rz1989s"
-        install_rz1989s
-    elif [ "$tmck_rc" -ne 0 ]; then
-        exit "$tmck_rc"
+for stale in \
+    "$STATUSLINE_DIR/statusline.sh.bak" \
+    "$STATUSLINE_DIR/lib" \
+    "$STATUSLINE_DIR/examples" \
+    "$STATUSLINE_DIR/Config.toml" \
+    "$STATUSLINE_DIR/statusline-wrapper.sh" \
+    "$STATUSLINE_DIR/version.txt" \
+    "$STATUSLINE_DIR/themes.py" \
+    "$STATUSLINE_DIR/.Config.cache.sh" \
+    "$STATUSLINE_DIR/.Config.checksum" \
+    "$CLAUDE_DIR/statusline_command.py" \
+    "$CLAUDE_DIR/statusline-choice"
+do
+    # -L as well as -e: the tmck deploy left dangling symlinks, which -e misses.
+    if [ -e "$stale" ] || [ -L "$stale" ]; then
+        stale_report "$stale"
     fi
-
-elif [ "$STATUSLINE_CHOICE" = "none" ]; then
-    echo "  ⏭️  statusline disabled (STATUSLINE_CHOICE=none) — no backend installed"
+done
+for ext in "$CLAUDE_DIR"/external/yet-another-statusline-*; do
+    if [ -e "$ext" ]; then
+        stale_report "$ext"
+    fi
+done
+if [ "$stale_found" -eq 1 ]; then
+    echo ""
 fi
 
 # ---------------------------------------------------------------------------
-# Persist the resolved choice to the per-target marker. We only write when
-# (a) the marker doesn't exist yet (first install), or (b) the caller asked
-# us to persist (STATUSLINE_CHOICE_PERSIST=1 — set by set-statusline.sh).
-# A bare STATUSLINE_CHOICE env var does NOT trigger persistence, so a stray
-# export in .zshrc does not launder itself into the marker.
-# ---------------------------------------------------------------------------
-if [ ! -f "$CLAUDE_DIR/statusline-choice" ] || [ "$STATUSLINE_CHOICE_PERSIST" -eq 1 ]; then
-    printf '%s\n' "$STATUSLINE_CHOICE" > "$CLAUDE_DIR/statusline-choice"
-fi
-
-# ---------------------------------------------------------------------------
-# Rewrite settings.json.statusLine to match the resolved choice. JSON
+# Point settings.json.statusLine at the deployed script. JSON
 # load/mutate/dump (mirroring the identity-overlay Python block above) — not
 # AWK-marker splicing, because the statusLine object spans multiple lines and
 # would be vulnerable to any formatter that reorders keys.
 # ---------------------------------------------------------------------------
 if [ -f "$CLAUDE_DIR/settings.json" ] && command -v python3 >/dev/null 2>&1; then
-    if ! python3 - "$CLAUDE_DIR/settings.json" "$STATUSLINE_CHOICE" "$CLAUDE_DIR_TILDE" <<'PYEOF'
+    if ! python3 - "$CLAUDE_DIR/settings.json" "$CLAUDE_DIR_TILDE" <<'PYEOF'
 import json, os, sys
-path, choice, tilde = sys.argv[1], sys.argv[2], sys.argv[3]
+path, tilde = sys.argv[1], sys.argv[2]
 with open(path) as f:
     s = json.load(f)
-if choice == "rz1989s":
-    s["statusLine"] = {
-        "type": "command",
-        "command": f"bash {tilde}/statusline/statusline-wrapper.sh",
-        "refreshInterval": 5,
-    }
-elif choice == "tmck":
-    s["statusLine"] = {
-        "type": "command",
-        "command": f"python3 {tilde}/statusline_command.py",
-        "refreshInterval": 5,
-    }
-elif choice == "none":
-    s.pop("statusLine", None)
-else:
-    sys.exit(f"unknown statusline choice: {choice!r}")
+s["statusLine"] = {
+    "type": "command",
+    "command": f"bash {tilde}/statusline/statusline.sh",
+    # Event-driven updates go quiet while background subagents run, so keep a
+    # timer to refresh git state and quota during idle stretches.
+    "refreshInterval": 5,
+}
 # Write atomically to avoid leaving a half-written file if the process is killed.
 # ensure_ascii=False for the same reason as the skillOverrides merge above: the
 # default escapes the em-dashes in the Auto Mode prose, which would leave the
@@ -455,7 +341,7 @@ PYEOF
         echo "  ❌ statusLine splice failed — settings.json unchanged" >&2
         rm -f "$CLAUDE_DIR/settings.json.tmp"
     else
-        echo "  🎚️  settings.json statusLine wired for: $STATUSLINE_CHOICE"
+        echo "  🎚️  settings.json statusLine wired"
     fi
 fi
 

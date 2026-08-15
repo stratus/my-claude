@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Shellcheck hooks, scripts, installer
+      - name: Shellcheck hooks, scripts, statusline, installer
         run: |
           shellcheck --version
-          shellcheck -S error hooks/*.sh scripts/*.sh install.sh
+          shellcheck -S error hooks/*.sh scripts/*.sh config/statusline/*.sh install.sh
 
   config-checks:
     name: Config consistency
@@ -31,5 +31,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install bats
         run: sudo apt-get update -q && sudo apt-get install -y -q bats jq
-      - name: Run pretooluse-bash tests
+      - name: Run hook and statusline tests
         run: bats tests/

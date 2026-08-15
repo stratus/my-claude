@@ -25,33 +25,54 @@ Three orthogonal revert paths:
 - `make unset-git-identity` — removes only the `[includeIf]` path values this tooling wrote to `~/.gitconfig` (uses `git config --unset --fixed-value` for surgical removal); deletes `$CLAUDE_DIR/.gitconfig.d/identity.inc`. Does NOT touch `identity.json`. Writes a timestamped+PID-suffixed backup of `~/.gitconfig` first.
 - `make reset-all-identity` — both of the above.
 
-## Statusline backends
+## Statusline
 
-Two statusline backends are supported, plus a "none" option. The choice is per-target, persisted in `$CLAUDE_DIR/statusline-choice` (gitignored).
+`config/statusline/statusline.sh` (bash + `jq`) is the whole statusline. There is no
+backend choice, no marker file, no pinned commit, and no network fetch — `install.sh`
+copies the script and points `settings.json` at
+`bash ~/.claude/statusline/statusline.sh`.
 
-| Choice | Backend | settings.json `statusLine.command` |
-|--------|---------|-----------------------------------|
-| `rz1989s` (default) | rz1989s/claude-code-statusline + local `statusline-wrapper.sh` | `bash ~/.claude/statusline/statusline-wrapper.sh` |
-| `tmck` | tmck-code/yet-another-statusline (Python entrypoint) | `python3 ~/.claude/statusline_command.py` |
-| `none` | No statusline | (key absent from settings.json) |
+**The invariant: exactly two lines, for every possible payload.** This is the property
+the file exists to guarantee. It replaced a vendored backend whose height was hardcoded
+in Python and grew with activity — a boxed panel that reached 15 rows with subagents
+running. `check-config.sh` and `tests/statusline.bats` both assert the line count; treat
+a third line as a bug, not a feature.
 
-Both backends are fetched at install time from the upstream GitHub repos, pinned to specific commits, and verified by SHA-256 before extraction. Pins live in `install.sh` (rz1989s) and `scripts/install-statusline-tmck.sh` (tmck).
+```
+ ~/d/s/my-claude  main*  Opus 5 · high
+ ctx ████░░░░░░ 38%  |  5h 23%  |  7d 41%
+```
 
-**Setting the choice.**
+Line 1: abbreviated cwd, git branch + `*` if dirty, model, effort. Line 2: context-window
+usage, then 5h/7d rate-limit headroom. Under `~/claude-corp/` line 2 shows session cost
+and elapsed time instead — that path is API-billed, where cost is real and `rate_limits`
+is absent. This cwd branch is the only conditional in the script and preserves the intent
+of the former `statusline-wrapper.sh`.
 
-- First `make install` on a new machine prompts once (interactive) and persists the answer to `~/.claude/statusline-choice`. Subsequent installs honor that marker silently.
-- `make set-statusline` (interactive) or `make set-statusline CHOICE=tmck` (non-interactive) switches the backend. This is the only path that overwrites an existing marker.
-- `STATUSLINE_CHOICE=tmck make install` overrides for **the current run only** — a bare env var does NOT rewrite the marker. This prevents a stray `export STATUSLINE_CHOICE=...` in `.zshrc` from silently laundering itself into the persisted record.
-- `make unset-statusline` resets the per-target marker to `rz1989s` (rather than deleting it — deletion would let install.sh fall through to the primary `$HOME/.claude/statusline-choice`, potentially re-pinning to tmck on the next bare install). Restores the rz1989s install, and optionally prompts to remove the extracted tmck source under `$CLAUDE_DIR/external/yet-another-statusline-*/`.
+**Read the native payload fields; never parse the transcript.** Claude Code now ships
+pre-calculated `context_window.used_percentage` and a `rate_limits` object
+(`five_hour`/`seven_day`, each `used_percentage` + `resets_at`). Estimating tokens from
+the transcript JSONL is what made the third-party projects thousands of lines long. If a
+new segment is wanted, check the payload schema first — it also carries `fast_mode`,
+`thinking`, `vim.mode`, `agent.name`, `pr.*`, and `worktree.*`.
 
-**tmck requires Python ≥ 3.14** (stdlib-only, no venv). Preflight contract:
+Constraints worth knowing before editing:
 
-- If `STATUSLINE_CHOICE=tmck` was set **explicitly** on this run (env or `make set-statusline tmck`) and Python is too old: hard-fail with an actionable message.
-- If the choice came from the **persisted marker** and Python is too old: log a warning and fall back to rz1989s **for this run only**. The marker is unchanged, so the next install retries tmck once Python is upgraded.
-
-**Multi-target behaviour.** The Makefile prompts once before iterating `CLAUDE_TARGETS`, so a fresh-machine `make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"` asks the question once and applies the same choice to every target. To diverge intentionally, run `make set-statusline CHOICE=tmck CLAUDE_TARGETS=~/.claude-corp` after the initial install.
-
-**Non-default targets** symlink against the primary install, mirroring the existing rz1989s pattern — one tarball extraction per pinned commit, regardless of how many targets are deployed.
+- **`tput cols` cannot work here.** Claude Code captures stdout instead of attaching a
+  tty. Read `$COLUMNS` (it sets it). The old backend's `tmux display-message` probe is
+  why it picked a 110-column layout inside an 80-column terminal.
+- **Sanitize types in `jq`, not bash.** All numeric fields go through
+  `if (… | type) == "number"`. A string `total_cost_usd` reaching `printf '%.2f'` writes
+  to stderr and breaks the silent-stderr contract.
+- **Never emit an empty field.** Fields are read positionally, one per line, via
+  `mapfile`. An empty or newline-containing value desyncs every field after it — that bug
+  shipped once and showed the context percentage where the model name belonged.
+- **Nulls are normal.** `context_window` is null before the first API call and after
+  `/compact`; `rate_limits` is absent on non-Pro/Max accounts. When rate limits are
+  missing, drop those segments rather than printing `0%` — a false zero reads as "no
+  quota used."
+- **Multi-line bars are officially fragile** (escape codes, resize collapse), so keep
+  line 2 ANSI-light and always reset before the newline.
 
 ## Deployment
 
@@ -77,11 +98,9 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 | `skills/*/SKILL.md` | `~/.claude/commands/*/SKILL.md` | Slash command skills |
 | `hooks/*` | `~/.claude/hooks/` | Event hooks (made executable) |
 | `scripts/set-identity.sh` | (invoked, not deployed) | Interactive setup for `$CLAUDE_DIR/identity.json` |
-| `scripts/install-statusline-tmck.sh` | (invoked, not deployed) | Fetches + verifies + extracts tmck-code/yet-another-statusline at a pinned commit |
-| `scripts/prompt-statusline.sh` | (invoked, not deployed) | One-shot interactive chooser (rz1989s / tmck / none) |
-| `scripts/set-statusline.sh` | (invoked, not deployed) | Persists `$CLAUDE_DIR/statusline-choice` and re-runs `install.sh` |
-| `scripts/unset-statusline.sh` | (invoked, not deployed) | Removes marker + offers cleanup of extracted source; restores rz1989s |
-| `config/statusline/` | `~/.claude/statusline/` | Statusline config (rz1989s wrapper + Config.toml) |
+| `scripts/check-config.sh` | (invoked, not deployed) | Repo consistency checks; also run in CI |
+| `config/statusline/statusline.sh` | `~/.claude/statusline/statusline.sh` | The 2-line session bar (bash + jq) |
+| `tests/*.bats` | (not deployed) | bats suites for `pretooluse-bash.sh` and the statusline |
 | `templates/cuj-template.md` | (manual copy) | CUJ document template |
 | `templates/ad-template.md` | (manual copy) | Architecture Decision Record template |
 | `templates/mcp.json.example` | (manual copy) | Recommended MCP servers for new projects |
@@ -206,11 +225,11 @@ Under `/autopilot`, the env var `CLAUDE_AUTOPILOT=1` is exported. The `pretoolus
 ## Testing Changes
 
 After modifying any config:
-1. Run `bash scripts/check-config.sh` — validates settings.json, rules/skills/agents frontmatter, and documented counts
+1. Run `bash scripts/check-config.sh` — validates settings.json, rules/skills/agents frontmatter, documented counts, and the statusline (parses, renders exactly 2 lines, wired in settings.json)
 2. Run `make install` to deploy
 3. Start a new `claude` session to pick up changes
 4. Verify the change takes effect (skills appear in `/help`, agents load, etc.)
 
-CI (`.github/workflows/ci.yml`) runs on every push: shellcheck (error severity) on hooks/scripts/installer, `scripts/check-config.sh`, and the bats suite in `tests/` covering `pretooluse-bash.sh` (dangerous patterns, autopilot bypass, all 5 gates, trivial carve-out).
+CI (`.github/workflows/ci.yml`) runs on every push: shellcheck (error severity) on hooks/scripts/statusline/installer, `scripts/check-config.sh`, and the bats suites in `tests/` covering `pretooluse-bash.sh` (dangerous patterns, autopilot bypass, all 5 gates, trivial carve-out) and `statusline.sh` (the 2-line invariant, field extraction, corp split, hostile input, width fitting).
 
 For CLAUDE.md changes: the file is loaded into every session's system prompt. Check that instructions are clear and unambiguous.

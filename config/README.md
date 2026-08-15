@@ -13,7 +13,7 @@ This is the deployed `~/.claude/` configuration — auto-generated from the `my-
 | `agents/` | 12 specialized sub-agents |
 | `commands/` | Slash-command skills (`/plan`, `/implement`, `/polish`, …) |
 | `hooks/` | Event hooks (pre-commit gate, dangerous-command blocker, formatters) |
-| `statusline/` | Statusline binary + Config.toml + wrapper |
+| `statusline/statusline.sh` | The 2-line session bar (bash + jq) |
 | `review-markers/` | Runtime — fresh-review markers used by the pre-commit gate |
 | `projects/` | Runtime — per-project auto-memory (local only, never commit) |
 | `plans/` | Runtime — saved implementation plans |
