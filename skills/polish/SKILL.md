@@ -1,6 +1,6 @@
 ---
 name: polish
-description: Take a project from "it works" to "it's shippable." Runs audit, fixes findings, walks the Definition of Done checklist, and generates a release readiness score. Use before releasing, after feature-complete, or when quality feels prototype-y.
+description: Take a project from "it works" to "it's shippable" — audits, fixes findings, walks the Definition of Done, and scores release readiness. Use before a release or when work is feature-complete.
 model: opus
 argument-hint: "[--non-interactive --journal <path>] [project-type: web|cli|infra]"
 ---

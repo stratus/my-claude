@@ -1,6 +1,6 @@
 ---
 name: audit
-description: Run a full read-only audit of the current project — code review, security analysis, and documentation freshness check. Use to assess project health without making changes.
+description: Read-only project health check — code review, security analysis, and doc freshness, changing nothing. Use to assess a project before deciding what to fix.
 model: sonnet
 argument-hint: "[focus-area]"
 ---

@@ -111,6 +111,97 @@ done
 [ "$FAILURES" -eq "$COUNT_FAILS" ] && ok "counts: $N_AGENTS agents, $N_SKILLS skills (documented claims checked)"
 
 # ---------------------------------------------------------------------------
+# 6. Skill-listing budget — the constraint that actually breaks skill routing.
+#
+# Claude Code injects a listing of skill names + descriptions each turn, capped
+# at skillListingBudgetFraction (default 0.01) of the context window. On
+# overflow, descriptions are SILENTLY shortened — a skill still looks installed
+# but has lost the keywords Claude matches on, so it stops triggering. This
+# check keeps the repo's own contribution to that listing bounded.
+#
+# Threshold: 2000 chars = 1% of a 200k context. We deploy with
+# skillListingBudgetFraction=0.02, so this leaves ~2x headroom and keeps the
+# config safe even on a 200k model. Skills marked "off" in skillOverrides or
+# carrying disable-model-invocation:true cost nothing and are excluded.
+# ---------------------------------------------------------------------------
+BUDGET_FAILS=$FAILURES
+SKILL_BUDGET_MAX=2000
+
+if command -v python3 >/dev/null 2>&1; then
+    budget_report=$(python3 - <<'PY'
+import glob, json, os, re
+
+# The threshold lives in the shell ($SKILL_BUDGET_MAX) so there is one source of
+# truth; this block only measures and reports.
+try:
+    with open("config/settings.json") as fh:
+        overrides = json.load(fh).get("skillOverrides", {})
+except Exception:
+    overrides = {}
+
+total, counted, skipped = 0, [], []
+for path in sorted(glob.glob("skills/*/SKILL.md")):
+    slug = os.path.basename(os.path.dirname(path))
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        text = fh.read()
+    block = re.match(r"^---\n(.*?)\n---", text, re.S)
+    if not block:
+        continue
+    fm = block.group(1)
+
+    if overrides.get(slug) == "off":
+        skipped.append(f"{slug} (off)")
+        continue
+    if re.search(r"^disable-model-invocation:\s*(true|yes|on|1)\s*$", fm, re.M | re.I):
+        skipped.append(f"{slug} (manual-only)")
+        continue
+
+    name = re.search(r"^name:\s*(.*)$", fm, re.M)
+    desc = re.search(r"^description:\s*(.*)$", fm, re.M)
+    name = name.group(1).strip() if name else slug
+    desc = desc.group(1).strip().strip("\"'") if desc else ""
+    total += len(name) + len(desc)
+    counted.append((slug, len(desc)))
+
+worst = ", ".join(
+    "%s (%d)" % (slug, n) for slug, n in sorted(counted, key=lambda x: -x[1])[:3]
+)
+# Single pipe-delimited line; the caller treats any other shape as "unverified".
+print("%d|%d|%d|%s" % (total, len(counted), len(skipped), worst))
+PY
+    )
+    # Fail CLOSED. The python block emits a single "total|counted|skipped|worst"
+    # line; anything else (crash, unreadable skill, malformed frontmatter) means
+    # the budget is UNKNOWN, not zero. Falling back to 0 here would print a green
+    # check while descriptions were silently over budget — the exact
+    # looks-fine-but-does-nothing failure this check exists to catch.
+    if [ -z "$budget_report" ]; then
+        fail "skill-listing budget check did not run (python3 error) — budget unverified"
+    else
+        b_total="${budget_report%%|*}"
+        b_rest="${budget_report#*|}"
+        b_count="${b_rest%%|*}"
+        b_rest="${b_rest#*|}"
+        b_skip="${b_rest%%|*}"
+        b_worst="${b_rest#*|}"
+        if ! [ "$b_total" -eq "$b_total" ] 2>/dev/null; then
+            fail "skill-listing budget check returned garbage ('$budget_report') — budget unverified"
+        elif [ "$b_count" -eq 0 ]; then
+            # Zero measured skills is never a legitimate pass — it means the glob
+            # matched nothing (wrong cwd, moved skills/ dir), so the budget went
+            # unmeasured rather than measured-as-fine.
+            fail "skill-listing budget check found no skills under skills/*/SKILL.md — run from the repo root"
+        elif [ "$b_total" -gt "$SKILL_BUDGET_MAX" ]; then
+            fail "skill listing is $b_total chars, over the $SKILL_BUDGET_MAX budget — longest: $b_worst"
+        fi
+    fi
+    [ "$FAILURES" -eq "$BUDGET_FAILS" ] && \
+        ok "skill listing: $b_total/$SKILL_BUDGET_MAX chars ($b_count listed, $b_skip excluded)"
+else
+    ok "skill listing: skipped (python3 not found)"
+fi
+
+# ---------------------------------------------------------------------------
 echo ""
 if [ "$FAILURES" -gt 0 ]; then
     echo "❌ $FAILURES check(s) failed" >&2

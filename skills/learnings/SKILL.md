@@ -1,6 +1,6 @@
 ---
 name: learnings
-description: Document what went well, what went wrong, and what to do differently after completing a feature or fixing a hard bug. Compounds knowledge across sessions.
+description: Use when the user says "what did we learn", "retro", or "post-mortem", or after a hard bug is fixed — records what went well, what went wrong, and what to change.
 model: haiku
 argument-hint: "[feature or topic]"
 ---

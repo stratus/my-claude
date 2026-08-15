@@ -3,6 +3,12 @@ name: autopilot
 description: Execute an approved /plan unattended — phases, agents, commits — stopping only on hard safety failures (hook exit 2, sandbox/network deny, repeated test failures). Use after /plan when the user wants hands-off execution.
 model: opus
 argument-hint: "[plan slug, or omit to use most recent plan]"
+# Always dispatched explicitly — by the user typing /autopilot, or by /plan
+# emitting the literal text `/autopilot <slug>`. Never inferred from prose, so
+# its description is dead weight in the skill listing (see the budget check in
+# scripts/check-config.sh). disable-model-invocation drops it from that listing
+# entirely while leaving /autopilot typable.
+disable-model-invocation: true
 ---
 
 <!-- ultrathink: keyword trigger required because alwaysThinkingEnabled=false in settings.json -->
