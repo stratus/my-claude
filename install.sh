@@ -442,9 +442,12 @@ elif choice == "none":
 else:
     sys.exit(f"unknown statusline choice: {choice!r}")
 # Write atomically to avoid leaving a half-written file if the process is killed.
+# ensure_ascii=False for the same reason as the skillOverrides merge above: the
+# default escapes the em-dashes in the Auto Mode prose, which would leave the
+# deployed file permanently checksum-divergent from the repo copy.
 tmp = path + ".tmp"
-with open(tmp, "w") as f:
-    json.dump(s, f, indent=2)
+with open(tmp, "w", encoding="utf-8") as f:
+    json.dump(s, f, indent=2, ensure_ascii=False)
     f.write("\n")
 os.replace(tmp, path)
 PYEOF

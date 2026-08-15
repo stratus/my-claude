@@ -43,6 +43,28 @@ else
     fail "settings.json is missing the identity block markers — real identity may have been committed"
 fi
 
+# skillOverrides must name only skills this repo owns. The DEPLOYED settings.json
+# accumulates entries for internal/employer tooling; since this repo is public,
+# a "sync my settings back" would publish that list. Catch it here rather than in
+# review.
+if command -v python3 >/dev/null 2>&1; then
+    foreign=$(python3 -c '
+import json, os
+try:
+    ov = json.load(open("config/settings.json")).get("skillOverrides", {})
+except Exception:
+    raise SystemExit(0)
+owned = {n for n in os.listdir("skills")
+         if os.path.isfile(os.path.join("skills", n, "SKILL.md"))}
+print(" ".join(sorted(k for k in ov if k not in owned)))
+' 2>/dev/null || true)
+    if [ -n "$foreign" ]; then
+        fail "settings.json skillOverrides names non-repo skills ($foreign) — deployed settings may have been synced back into this public repo"
+    else
+        ok "settings.json skillOverrides names only repo-owned skills"
+    fi
+fi
+
 # ---------------------------------------------------------------------------
 # 2. Rules frontmatter — `paths:` or nothing; never `globs:`
 # ---------------------------------------------------------------------------

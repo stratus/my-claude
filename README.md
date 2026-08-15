@@ -302,11 +302,26 @@ after `make install` — no manual `/plugin install` steps to remember.
 }
 ```
 
-Currently enabled: four language servers (`pyright`, `typescript`, `gopls`,
-`rust-analyzer`), workflow tooling (`skill-creator`, `plugin-dev`, `pr-review-toolkit`,
-`code-review`, `claude-md-management`), and two integrations (`github`, `playwright`).
+Currently enabled (10, all first-party `@claude-plugins-official`): four language servers
+(`pyright`, `typescript`, `gopls`, `rust-analyzer`), workflow tooling (`skill-creator`,
+`plugin-dev`, `pr-review-toolkit`, `code-review`, `claude-md-management`), and `github`.
 `anthropics/claude-plugins-community` is registered via `extraKnownMarketplaces` but
 nothing is enabled from it yet.
+
+**Versions float — pinning is not available upstream.** Marketplace entries store only
+`{source, repo}`, `anthropics/claude-plugins-official` publishes no tags or releases, and
+the `"version"` field on a plugin is marketplace metadata rather than a lockfile pin. So a
+marketplace refresh can pull new agent and skill markdown that gets injected into
+sessions. The trust model is "Anthropic-controlled repo + GitHub account integrity."
+Since prevention isn't offered, the available control is detection:
+`~/.claude/plugins/installed_plugins.json` records a `gitCommitSha` per plugin — diff it
+across installs if you want a change signal. `playwright` is deliberately *not* enabled
+for a related reason: it runs `npx @playwright/mcp@latest`, a version resolved fresh at
+spawn time, and `config/rules/mcp-playwright.md` already covers per-project setup.
+
+Enabling a plugin does **not** mint or store credentials. The `github` plugin is inert
+until `GITHUB_PERSONAL_ACCESS_TOKEN` is exported; it requests no scopes of its own, so use
+a fine-grained, repo-scoped PAT.
 
 **Curation rule: prefer capabilities that don't overlap what's already here.** Skill
 descriptions share a fixed context budget (see "Skill listing budget" below), and two

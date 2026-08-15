@@ -140,9 +140,15 @@ skills; the slash-dispatch surface stays the only interrupt path.
 
 Declared in `config/settings.json` via `enabledPlugins` (`{"plugin-id@marketplace-id": true}`)
 and `extraKnownMarketplaces`, so a fresh machine reproduces the set through `make install`
-instead of manual `/plugin install` steps. Enabled today: 4 LSPs (pyright, typescript,
-gopls, rust-analyzer), 5 workflow plugins (skill-creator, plugin-dev, pr-review-toolkit,
-code-review, claude-md-management), 2 integrations (github, playwright).
+instead of manual `/plugin install` steps. Enabled today (10, all first-party): 4 LSPs
+(pyright, typescript, gopls, rust-analyzer), 5 workflow plugins (skill-creator,
+plugin-dev, pr-review-toolkit, code-review, claude-md-management), and github.
+
+Plugin versions **float** — the marketplace stores no ref, the repo publishes no tags,
+and a plugin's `"version"` is metadata, not a pin. Prefer first-party plugins, keep the
+set small, and treat `installed_plugins.json`'s `gitCommitSha` as the change-detection
+signal. Avoid plugins whose MCP servers resolve `@latest` at spawn time (this is why
+`playwright` is not enabled).
 
 Curation rule: **don't enable capabilities that overlap what's already here.** Plugin
 skills share the same listing budget as local ones, and duplicate coverage makes routing
@@ -150,6 +156,16 @@ worse. `security-guidance`, `feature-dev`, `hookify`, and `commit-commands` are
 deliberately excluded — `security-analyst`, `/implement`, hand-written hooks, and
 `/commit-messages` already cover them. `skill-creator` is worth knowing about: it runs
 evals against a skill to measure trigger accuracy, which beats guessing at descriptions.
+
+### Never sync deployed settings back into the repo
+
+**`skillOverrides` in this repo holds repo-owned skills only.** The deployed
+`~/.claude/settings.json` accumulates entries naming internal/employer tooling (Jira,
+Slack, PagerDuty, Glean, SharePoint, and similar). This repo is PUBLIC, so copying a
+deployed `settings.json` back over `config/settings.json` would publish that list. The
+merge is deliberately one-directional — deployed values flow *into* the deploy target at
+install time and never back into the repo. Add repo-owned entries by hand; never by
+copying the live file.
 
 ### settings.json is deploy-merged, not just copied
 

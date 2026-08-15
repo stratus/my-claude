@@ -295,8 +295,7 @@
     "pr-review-toolkit@claude-plugins-official": true,
     "code-review@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
-    "github@claude-plugins-official": true,
-    "playwright@claude-plugins-official": true
+    "github@claude-plugins-official": true
   },
   "attribution": {
     "commit": "Co-Authored-By: Claude <noreply@anthropic.com>",
