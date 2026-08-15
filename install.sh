@@ -163,7 +163,12 @@ copy_if_missing "$CONFIG_SOURCE/settings.json" "$CLAUDE_DIR/settings.json"
 # forward from the deployed file. Runs unconditionally, like the path-rewrite and
 # identity overlay below, so it repairs the file whether or not the copy fired.
 if [ -n "$LIVE_SKILL_OVERRIDES" ] && [ -f "$CLAUDE_DIR/settings.json" ] && command -v python3 >/dev/null 2>&1; then
+    # Kept inside $CLAUDE_DIR (not $TMPDIR) so the mv below is a same-filesystem
+    # rename, i.e. atomic — settings.json is never observed half-written. The
+    # trap covers the gap the if/else can't: a Ctrl-C mid-merge would otherwise
+    # strand the temp file in the live config dir.
     tmp_merged="$CLAUDE_DIR/settings.json.merge.$$"
+    trap 'rm -f "$tmp_merged"' EXIT
     if python3 -c '
 import json, sys
 settings_path, live_json, repo_skills_dir = sys.argv[1], sys.argv[2], sys.argv[3]
@@ -178,8 +183,9 @@ repo_owned = {
     if os.path.isfile(os.path.join(repo_skills_dir, name, "SKILL.md"))
 } if os.path.isdir(repo_skills_dir) else set()
 
+repo_declared = settings.get("skillOverrides", {})
 merged = {k: v for k, v in live.items() if k not in repo_owned}
-merged.update(settings.get("skillOverrides", {}))
+merged.update(repo_declared)
 if merged:
     settings["skillOverrides"] = dict(sorted(merged.items()))
     kept = sorted(k for k in merged if k not in repo_owned)
@@ -187,8 +193,26 @@ if merged:
         print("  🧩 Preserved skillOverrides for %d non-repo skill(s)" % len(kept),
               file=sys.stderr)
 
-with open(sys.argv[4], "w") as fh:
-    json.dump(settings, fh, indent=2)
+# The repo is the source of truth for its own skills, so a local toggle of a
+# repo-owned skill is intentionally reverted here. Say so out loud rather than
+# dropping it silently — an unexplained setting reversal is indistinguishable
+# from a bug.
+reverted = sorted(
+    k for k, v in live.items()
+    if k in repo_owned and repo_declared.get(k, "on") != v
+)
+if reverted:
+    print("  ↩️  Reset %s to the repo value (the repo owns its own skills; "
+          "edit config/settings.json to change)" % ", ".join(reverted),
+          file=sys.stderr)
+
+# ensure_ascii=False is load-bearing: settings.json is full of em-dashes in the
+# Auto Mode prose, and the default escapes each one to a — sequence. Since
+# copy_if_missing compares by SHA-256, that reserialization would leave the
+# deployed file permanently divergent from the repo copy, prompting
+# "settings.json differs" on every install until the user stops reading them.
+with open(sys.argv[4], "w", encoding="utf-8") as fh:
+    json.dump(settings, fh, indent=2, ensure_ascii=False)
     fh.write("\n")
 ' "$CLAUDE_DIR/settings.json" "$LIVE_SKILL_OVERRIDES" "$SCRIPT_DIR/skills" "$tmp_merged"; then
         mv "$tmp_merged" "$CLAUDE_DIR/settings.json"
@@ -196,6 +220,9 @@ with open(sys.argv[4], "w") as fh:
         echo "  ❌ skillOverrides merge failed — keeping settings.json as copied" >&2
         rm -f "$tmp_merged"
     fi
+    # Release the trap so it doesn't collide with the identity-overlay trap set
+    # further down; the temp file is already gone down both branches above.
+    trap - EXIT
 fi
 
 # Rewrite ~/.claude/ paths in settings.json for non-default targets

@@ -1,9 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "preferredNotifyMethod": "terminal_bell",
+  "preferredNotifChannel": "terminal_bell",
   "alwaysThinkingEnabled": false,
   "outputStyle": "Explanatory",
   "voiceEnabled": true,
+  "model": "opus[1m]",
+  "theme": "dark",
+  "tui": "fullscreen",
+  "remoteControlAtStartup": true,
+  "agentPushNotifEnabled": true,
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline/statusline-wrapper.sh",
@@ -65,7 +70,7 @@
     ],
     "UserPromptExpansion": [
       {
-        "matcher": "plan|implement|autopilot|polish|audit",
+        "matcher": "plan|implement|autopilot|polish|audit|egm",
         "hooks": [
           {
             "type": "command",
@@ -267,6 +272,32 @@
     ]
   },
   "enableAllProjectMcpServers": true,
+  "skillListingBudgetFraction": 0.02,
+  "skillOverrides": {
+    "pr": "off",
+    "ansible-audit": "off"
+  },
+  "extraKnownMarketplaces": {
+    "claude-plugins-community": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-community"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "pyright-lsp@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "gopls-lsp@claude-plugins-official": true,
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true
+  },
   "attribution": {
     "commit": "Co-Authored-By: Claude <noreply@anthropic.com>",
     "pr": "Generated with [Claude Code](https://claude.com/claude-code)"

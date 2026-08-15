@@ -97,9 +97,26 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 - Must have `SKILL.md` with YAML frontmatter (`name`, `description`, `model`)
 - All skills must have explicit `model:` (haiku for mechanical, sonnet for reasoning, opus for quality ceiling)
 - Sections: When to Use, Process, Output, Examples
-- Key skills: `/plan` → `/implement` → `/audit` → `/polish` → `/learnings`
+- Key skills: `/plan` → `/egm` → `/implement` → `/audit` → `/polish` → `/learnings`
 - Hands-off variant: `/plan` → `/autopilot <slug>` runs the whole plan unattended; stops only on hook exit 2, sandbox/network deny, or repeated test failure
 - See `skills/commit-messages/SKILL.md` for reference
+
+**Skill descriptions are a shared budget, not free text.** Claude Code injects every
+skill's name + description each turn, capped at `skillListingBudgetFraction` of the
+context window; on overflow it *silently truncates descriptions*, so a skill keeps
+appearing installed while quietly losing the keywords it routes on. Check 6 in
+`scripts/check-config.sh` caps this repo's contribution at 2000 chars (1% of a 200k
+context) and CI enforces it. Write descriptions like the first-party ones — third
+person, literal user phrasings front-loaded ("Use when the user says …"), not
+conceptual prose. Skills that are always *typed* rather than inferred (`/autopilot`)
+carry `disable-model-invocation: true`, which drops them from the listing entirely
+while keeping the slash command.
+
+**Skill handoffs must be dispatched, not suggested.** `/plan` previously told the user
+to run `/egm` in prose and it never once fired. The working pattern — used for both the
+Goldfish and autopilot handoffs — is `AskUserQuestion`, then emit the literal text
+`/egm <slug>` (or `/autopilot <slug>`) and stop. Skills never transitively invoke other
+skills; the slash-dispatch surface stays the only interrupt path.
 
 ### Agents (12 total)
 - Markdown files in `config/agents/` with frontmatter: `model`, `tools`, `maxTurns`, `color`
@@ -119,6 +136,32 @@ make install CLAUDE_TARGETS="~/.claude ~/.claude-corp"
 
 **Trivial-change carve-out**: Gates 3 (tests) and 4 (coverage) are skipped when ALL of: `LINES_CHANGED ≤ 20`, no changed file matches the security pattern, and no changed file matches the user-facing pattern. This mirrors Gate 1's threshold so typo fixes, comment tweaks, and small config nudges commit cleanly without a full test+coverage cycle. Gates 1, 2, and 5 stay active on their own triggers.
 
+### Plugins
+
+Declared in `config/settings.json` via `enabledPlugins` (`{"plugin-id@marketplace-id": true}`)
+and `extraKnownMarketplaces`, so a fresh machine reproduces the set through `make install`
+instead of manual `/plugin install` steps. Enabled today: 4 LSPs (pyright, typescript,
+gopls, rust-analyzer), 5 workflow plugins (skill-creator, plugin-dev, pr-review-toolkit,
+code-review, claude-md-management), 2 integrations (github, playwright).
+
+Curation rule: **don't enable capabilities that overlap what's already here.** Plugin
+skills share the same listing budget as local ones, and duplicate coverage makes routing
+worse. `security-guidance`, `feature-dev`, `hookify`, and `commit-commands` are
+deliberately excluded — `security-analyst`, `/implement`, hand-written hooks, and
+`/commit-messages` already cover them. `skill-creator` is worth knowing about: it runs
+evals against a skill to measure trigger accuracy, which beats guessing at descriptions.
+
+### settings.json is deploy-merged, not just copied
+
+`copy_if_missing` is a whole-file `cp`, so any key that exists only in the deployed
+`~/.claude/settings.json` is destroyed by `FORCE_UPDATE=1`. `install.sh` therefore
+snapshots live `skillOverrides` *before* the copy and re-merges after: repo-owned skills
+(anything with `skills/<name>/SKILL.md`) take the repo's value, everything else — corp
+skills under `$CLAUDE_DIR/skills/`, synced claude.ai skills, anything toggled via
+`/skills` — is carried forward. Add new always-local settings keys to
+`config/settings.json` as a tracked baseline rather than letting them live only in the
+deployed file.
+
 ### Hooks
 - Shell scripts in `hooks/`
 - Must be executable (`chmod +x`)
@@ -130,7 +173,7 @@ Wired events (6):
 - **PostToolUse / Edit|Write** → `after-edit.sh` (background format-on-save with timeout guard)
 - **Notification** → `notify.sh` (desktop notifications)
 - **SessionStart / startup** → `session-start-prune-markers.sh` (delete review markers >1h old to prevent stale-marker confusion)
-- **UserPromptExpansion / plan|implement|autopilot|polish|audit** → `log-skill-usage.sh` (one-line TSV log to `~/.claude/skill-usage.log` for the long-running workflow skills)
+- **UserPromptExpansion / plan|implement|autopilot|polish|audit|egm** → `log-skill-usage.sh` (one-line TSV log to `~/.claude/skill-usage.log` for the long-running workflow skills). Keep this matcher in sync when adding a workflow skill — the log is the only evidence of which skills actually run, and `egm`'s absence from it is why "why doesn't /egm fire?" took an investigation instead of a `grep`.
 - **PreCompact / manual|auto** → `pre-compact-snapshot.sh` (writes a small recovery snapshot to `~/.claude/projects/<slug>/last-pre-compact.md` with branch, HEAD, recent commits, staged files, most recent plan)
 
 ### Permission Posture

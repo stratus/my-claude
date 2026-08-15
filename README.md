@@ -290,6 +290,64 @@ External integrations are configured per-machine — not deployed by this repo. 
 
 A starter `.mcp.json` for new projects lives in `templates/mcp.json.example`.
 
+## Plugins
+
+Plugins are declared in `config/settings.json`, so a fresh machine gets the same set
+after `make install` — no manual `/plugin install` steps to remember.
+
+```jsonc
+"enabledPlugins": {
+  "pyright-lsp@claude-plugins-official": true,   // plugin-id@marketplace-id
+  ...
+}
+```
+
+Currently enabled: four language servers (`pyright`, `typescript`, `gopls`,
+`rust-analyzer`), workflow tooling (`skill-creator`, `plugin-dev`, `pr-review-toolkit`,
+`code-review`, `claude-md-management`), and two integrations (`github`, `playwright`).
+`anthropics/claude-plugins-community` is registered via `extraKnownMarketplaces` but
+nothing is enabled from it yet.
+
+**Curation rule: prefer capabilities that don't overlap what's already here.** Skill
+descriptions share a fixed context budget (see "Skill listing budget" below), and two
+skills competing on the same keywords route worse than one. `security-guidance`,
+`feature-dev`, `hookify`, and `commit-commands` are deliberately *not* enabled because
+this repo's own `security-analyst`, `/implement`, hand-written hooks, and
+`/commit-messages` already cover that ground.
+
+To browse and add: `/plugin` (the Discover tab shows each plugin's context cost, and the
+Installed tab flags anything unused for 2+ weeks — that's the pruning signal). Add the
+chosen id to `enabledPlugins` so it survives a reinstall.
+
+### Skill listing budget
+
+Claude Code injects a listing of skill names + descriptions each turn, capped at
+`skillListingBudgetFraction` (we deploy `0.02`; the default is `0.01`) of the context
+window. **On overflow, descriptions are silently truncated** — a skill still looks
+installed but has lost the keywords it is matched on, so it quietly stops triggering.
+
+`scripts/check-config.sh` enforces a 2000-char ceiling on this repo's own contribution
+(1% of a 200k context, so the config stays safe even off a 1M-context model). Two levers
+when it's tight:
+
+- `disable-model-invocation: true` on skills that are always typed, never inferred
+  (`/autopilot`) — removes the description from the listing entirely, keeps the command.
+- `"skillOverrides": {"<skill>": "off" | "name-only"}` for skills you want de-emphasized
+  rather than removed.
+
+The installer preserves `skillOverrides` entries for skills this repo doesn't own, so
+externally provisioned skills stay configured across a `FORCE_UPDATE=1 make install`.
+
+### Other ecosystem tools
+
+Not installed — suggest when relevant:
+
+| Tool | When relevant |
+|------|---------------|
+| [TDD Guard](https://github.com/nizos/tdd-guard) | Strict test-first workflow; hooks enforce red-green-refactor |
+| [Trail of Bits skills](https://github.com/trailofbits/skills) | Security-critical code: auth, payments, crypto, exposed APIs |
+| [claude-rules-doctor](https://github.com/nulone/claude-rules-doctor) | Rules not applying — finds `paths:` that match nothing |
+
 ## Updating
 
 ```bash
